@@ -31,23 +31,37 @@ namespace PSNLibrary
             SettingsViewModel = new PSNLibrarySettingsViewModel(this, api);
         }
 
-        //private string ParseOldPlatform(PlatformHash ids)
-        //{
-        //    if (ids.HasFlag(PlatformHash.PS3))
-        //    {
-        //        return "sony_playstation3";
-        //    }
-        //    else if (ids.HasFlag(PlatformHash.PSVITA))
-        //    {
-        //        return "sony_vita";
-        //    }
-        //    else if (ids.HasFlag(PlatformHash.PSP))
-        //    {
-        //        return "sony_psp";
-        //    }
+        private string ParsePlatform(string platformId)
+        {
+            string platform = null;
 
-        //    return null;
-        //}
+            switch (platformId)
+            {
+                case "PSP":
+                    platform = "sony_psp";
+                    break;
+
+                case "PSVITA":
+                    platform = "sony_vita";
+                    break;
+
+                case "PS3":
+                    platform = "sony_playstation3";
+                    break;
+
+                case "PS4":
+                    platform = "sony_playstation4";
+                    break;
+
+                case "PS5":
+                    platform = "sony_playstation5";
+                    break;
+
+                default:
+                    break;
+            }
+            return platform;
+        }
 
         private string FixGameName(string name)
         {
@@ -65,11 +79,16 @@ namespace PSNLibrary
             foreach (var title in clientApi.GetAccountTitles().GetAwaiter().GetResult())
             {
                 var gameName = FixGameName(title.name);
+
+                string platform = ParsePlatform(title.platform);
+
                 parsedGames.Add(new GameMetadata
                 {
-                    GameId = "#ACCOUNT#" + title.titleId,
-                    Name = gameName
-                });
+                    GameId = title.productId + '_' + title.entitlementId,
+                    Name = gameName,
+                    CoverImage = new MetadataFile(title.image.url),
+                    Platforms = new HashSet<MetadataProperty> { new MetadataSpecProperty(platform) }
+            });
             }
 
             return parsedGames;
@@ -185,18 +204,11 @@ namespace PSNLibrary
         {
             var importedGames = new List<Game>();
 
-            //var clientApi = new PSNAccountClient(this, PlayniteApi);
-            //var allGames = new List<GameMetadata>();
-            //allGames.AddRange(ParseAccountList(clientApi));
-
-            //return importedGames;
-
-
             Exception importError = null;
-            //if (!SettingsViewModel.Settings.ConnectAccount)
-            //{
-            //    return importedGames;
-            //}
+            if (!SettingsViewModel.Settings.ConnectAccount)
+            {
+                return importedGames;
+            }
 
             try
             {
@@ -205,9 +217,8 @@ namespace PSNLibrary
                 allGames.AddRange(ParseAccountList(clientApi));
                 //allGames.AddRange(ParseThrophies(clientApi));
 
-                foreach (var group in allGames.GroupBy(a => a.Name.ToLower().Replace(":", "")))
+                foreach (var game in allGames)
                 {
-                    var game = group.First();
                     if (PlayniteApi.ApplicationSettings.GetGameExcludedFromImport(game.GameId, Id))
                     {
                         continue;

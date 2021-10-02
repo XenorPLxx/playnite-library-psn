@@ -12,10 +12,21 @@ namespace PSNLibrary.Models
         {
             public class Title
             {
-                public string titleId { get; set; }
+                public class Image
+                {
+                    public string url { get; set; }
+                }
+                public string conceptId { get; set; }
+                public string entitlementId { get; set; }
+                public bool isActive { get; set; }
+                public bool isDownloadable { get; set; }
+                public bool isPreOrder { get; set; }   
                 public string name { get; set; }
-                //public string image { get; set; }
-                //public string privacy { get; set; }
+                public string platform { get; set; }
+                public string productId { get; set; }
+                public string subscriptionService { get; set; }
+                public string titleId { get; set; }
+                public Image image { get; set; }
 
                 public override string ToString()
                 {
