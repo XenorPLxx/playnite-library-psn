@@ -73,10 +73,10 @@ namespace PSNLibrary
             return Regex.Replace(gameName, @"\s+", " ");
         }
 
-        private List<GameMetadata> ParseAccountList(PSNAccountClient clientApi)
+        private List<GameMetadata> parseGames(List<AccountTitlesResponseData.AccountTitlesRetrieve.Title> gamesToParse)
         {
             var parsedGames = new List<GameMetadata>();
-            foreach (var title in clientApi.GetAccountTitles().GetAwaiter().GetResult())
+            foreach (var title in gamesToParse)
             {
                 var gameName = FixGameName(title.name);
 
@@ -84,14 +84,48 @@ namespace PSNLibrary
 
                 parsedGames.Add(new GameMetadata
                 {
-                    GameId = title.productId + '_' + title.entitlementId,
+                    GameId = title.titleId,
                     Name = gameName,
                     CoverImage = new MetadataFile(title.image.url),
                     Platforms = new HashSet<MetadataProperty> { new MetadataSpecProperty(platform) }
-            });
+                });
             }
 
             return parsedGames;
+        }
+
+        // TODO: Figure out smarter way to share code without overloading
+        private List<GameMetadata> parseGames(List<PlayedTitlesResponseData.PlayedTitlesRetrieve.Title> gamesToParse)
+        {
+            var parsedGames = new List<GameMetadata>();
+            foreach (var title in gamesToParse)
+            {
+                var gameName = FixGameName(title.name);
+
+                string platform = ParsePlatform(title.platform);
+
+                parsedGames.Add(new GameMetadata
+                {
+                    GameId = title.titleId,
+                    Name = gameName,
+                    CoverImage = new MetadataFile(title.image.url),
+                    Platforms = new HashSet<MetadataProperty> { new MetadataSpecProperty(platform) }
+                });
+            }
+
+            return parsedGames;
+        }
+
+        private List<GameMetadata> ParseAccountList(PSNAccountClient clientApi)
+        {
+            var gamesToParse = clientApi.GetAccountTitles().GetAwaiter().GetResult();
+            return parseGames(gamesToParse);
+        }
+        
+        private List<GameMetadata> ParsePlayedList(PSNAccountClient clientApi)
+        {
+            var gamesToParse = clientApi.GetPlayedTitles().GetAwaiter().GetResult();            
+            return parseGames(gamesToParse);
         }
 
         //private List<GameMetadata> ParseThrophies(PSNAccountClient clientApi)
@@ -215,10 +249,12 @@ namespace PSNLibrary
                 var clientApi = new PSNAccountClient(this, PlayniteApi);
                 var allGames = new List<GameMetadata>();
                 allGames.AddRange(ParseAccountList(clientApi));
+                allGames.AddRange(ParsePlayedList(clientApi));
                 //allGames.AddRange(ParseThrophies(clientApi));
 
-                foreach (var game in allGames)
+                foreach (var group in allGames.GroupBy(a => a.GameId))
                 {
+                    var game = group.First();
                     if (PlayniteApi.ApplicationSettings.GetGameExcludedFromImport(game.GameId, Id))
                     {
                         continue;

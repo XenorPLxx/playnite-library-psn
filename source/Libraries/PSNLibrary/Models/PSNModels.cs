@@ -6,9 +6,11 @@ using System.Threading.Tasks;
 
 namespace PSNLibrary.Models
 {
-    public class ResponseData
+    
+    
+    public class PlayedTitlesResponseData
     {
-        public class TitlesRetrieve
+        public class PlayedTitlesRetrieve
         {
             public class Title
             {
@@ -18,9 +20,40 @@ namespace PSNLibrary.Models
                 }
                 public string conceptId { get; set; }
                 public string entitlementId { get; set; }
-                public bool isActive { get; set; }
+                public bool? isActive { get; set; }
+                public string name { get; set; }
+                public string platform { get; set; }
+                public string productId { get; set; }
+                public string subscriptionService { get; set; }
+                public string titleId { get; set; }
+                public Image image { get; set; }
+
+                public override string ToString()
+                {
+                    return name;
+                }
+            } 
+
+            public List<Title> games { get; set; }
+
+        }
+        public PlayedTitlesRetrieve gameLibraryTitlesRetrieve { get; set; }
+    }
+    public class AccountTitlesResponseData
+    {
+        public class AccountTitlesRetrieve
+        {
+            public class Title
+            {
+                public class Image
+                {
+                    public string url { get; set; }
+                }
+                public string conceptId { get; set; }
+                public string entitlementId { get; set; }
+                public bool? isActive { get; set; }
                 public bool isDownloadable { get; set; }
-                public bool isPreOrder { get; set; }   
+                public bool isPreOrder { get; set; }
                 public string name { get; set; }
                 public string platform { get; set; }
                 public string productId { get; set; }
@@ -46,13 +79,9 @@ namespace PSNLibrary.Models
 
             public PageInfo pageInfo;
         }
-
-        public TitlesRetrieve purchasedTitlesRetrieve { get; set; }
-        //public int start { get; set; }
-        //public int size { get; set; }
-        //public int totalResults { get; set; }
+        public AccountTitlesRetrieve purchasedTitlesRetrieve { get; set; }   
     }
-    public class ErrorResponse
+    public class AccountTitlesErrorResponse
     {        
         public class Error {
             public string message { get; set; }
@@ -60,7 +89,7 @@ namespace PSNLibrary.Models
            
         public List<Error> errors { get; set; }
 
-        public ResponseData data { get; set; }
+        public AccountTitlesResponseData data { get; set; }
     }
 
     //public class TrophyTitles
@@ -114,9 +143,13 @@ namespace PSNLibrary.Models
     //    public List<TrophyTitle> trophyTitles { get; set; }
     //}
 
+    public class PlayedTitles
+    {
+        public PlayedTitlesResponseData data { get; set; }
+    }
     public class AccountTitles
     {
-        public ResponseData data { get; set; }
+        public AccountTitlesResponseData data { get; set; }
     }
 
     //    public class ProfileInfo

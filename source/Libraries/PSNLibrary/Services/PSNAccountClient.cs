@@ -33,6 +33,7 @@ namespace PSNLibrary.Services
         private const int pageRequestLimit = 100;
         private const string loginUrl = @"https://web.np.playstation.com/api/session/v1/signin?redirect_uri=https://io.playstation.com/central/auth/login%3FpostSignInURL=https://www.playstation.com/home%26cancelURL=https://www.playstation.com/home&smcid=web:pdc";
         private const string gameListUrl = "https://web.np.playstation.com/api/graphql/v1/op?operationName=getPurchasedGameList&variables={{\"isActive\":true,\"platform\":[\"ps3\",\"ps4\",\"ps5\"],\"start\":{0},\"size\":{1},\"subscriptionService\":\"NONE\"}}&extensions={{\"persistedQuery\":{{\"version\":1,\"sha256Hash\":\"2c045408b0a4d0264bb5a3edfed4efd49fb4749cf8d216be9043768adff905e2\"}}}}";
+        private const string playedListUrl = "https://web.np.playstation.com/api/graphql/v1/op?operationName=getUserGameList&variables=%7B%22limit%22%3A100%2C%22categories%22%3A%22ps4_game%2Cps5_native_game%22%7D&extensions=%7B%22persistedQuery%22%3A%7B%22version%22%3A1%2C%22sha256Hash%22%3A%22e780a6d8b921ef0c59ec01ea5c5255671272ca0d819edb61320914cf7a78b3ae%22%7D%7D";
 
         //private const string loginTokenUrl = @"https://ca.account.sony.com/api/v1/oauth/authorize?response_type=token&scope=capone:report_submission,kamaji:game_list,kamaji:get_account_hash,user:account.get,user:account.profile.get,kamaji:social_get_graph,kamaji:ugc:distributor,user:account.identityMapper,kamaji:music_views,kamaji:activity_feed_get_feed_privacy,kamaji:activity_feed_get_news_feed,kamaji:activity_feed_submit_feed_story,kamaji:activity_feed_internal_feed_submit_story,kamaji:account_link_token_web,kamaji:ugc:distributor_web,kamaji:url_preview&client_id=656ace0b-d627-47e6-915c-13b259cd06b2&redirect_uri=https://my.playstation.com/auth/response.html?requestID=iframe_request_ecd7cd01-27ad-4851-9c0d-0798c1a65e53&baseUrl=/&targetOrigin=https://my.playstation.com&prompt=none";
         //private const string tokenUrl = @"https://ca.account.sony.com/api/v1/oauth/authorize?response_type=token&scope=capone:report_submission,kamaji:game_list,kamaji:get_account_hash,user:account.get,user:account.profile.get,kamaji:social_get_graph,kamaji:ugc:distributor,user:account.identityMapper,kamaji:music_views,kamaji:activity_feed_get_feed_privacy,kamaji:activity_feed_get_news_feed,kamaji:activity_feed_submit_feed_story,kamaji:activity_feed_internal_feed_submit_story,kamaji:account_link_token_web,kamaji:ugc:distributor_web,kamaji:url_preview&client_id=656ace0b-d627-47e6-915c-13b259cd06b2&redirect_uri=https://my.playstation.com/auth/response.html?requestID=iframe_request_b0f09e04-8206-49be-8be6-b2cfe05249e2&baseUrl=/&targetOrigin=https://my.playstation.com&prompt=none";
@@ -249,11 +250,30 @@ namespace PSNLibrary.Services
         //    return titles;
         //}
 
-        public async Task<List<ResponseData.TitlesRetrieve.Title>> GetAccountTitles()
+        public async Task<List<PlayedTitlesResponseData.PlayedTitlesRetrieve.Title>> GetPlayedTitles()
         {
             await CheckAuthentication();
 
-            var titles = new List<ResponseData.TitlesRetrieve.Title>();
+            var titles = new List<PlayedTitlesResponseData.PlayedTitlesRetrieve.Title>();
+
+            var cookieContainer = ReadCookiesFromDisk();
+            using (var handler = new HttpClientHandler() { CookieContainer = cookieContainer })
+            using (var httpClient = new HttpClient(handler))
+            {
+                var resp = httpClient.GetAsync(playedListUrl).GetAwaiter().GetResult();
+                var strResponse = await resp.Content.ReadAsStringAsync();
+                var titles_part = Serialization.FromJson<PlayedTitles>(strResponse);
+                titles.AddRange(titles_part.data.gameLibraryTitlesRetrieve.games);
+            }
+
+            return titles;
+        }
+
+        public async Task<List<AccountTitlesResponseData.AccountTitlesRetrieve.Title>> GetAccountTitles()
+        {
+            await CheckAuthentication();
+
+            var titles = new List<AccountTitlesResponseData.AccountTitlesRetrieve.Title>();
 
             var cookieContainer = ReadCookiesFromDisk();
             using (var handler = new HttpClientHandler() { CookieContainer = cookieContainer })
@@ -345,7 +365,7 @@ namespace PSNLibrary.Services
 
                     var resp = httpClient.GetAsync(gameListUrl.Format(0, 24)).GetAwaiter().GetResult();
                     var strResponse = await resp.Content.ReadAsStringAsync();
-                    if (Serialization.TryFromJson<ErrorResponse>(strResponse, out var error) && error.data.purchasedTitlesRetrieve == null)
+                    if (Serialization.TryFromJson<AccountTitlesErrorResponse>(strResponse, out var error) && error.data.purchasedTitlesRetrieve == null)
                     {
                         return false;
                     }
