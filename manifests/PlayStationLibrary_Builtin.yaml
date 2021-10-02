@@ -1,0 +1,12 @@
+AddonId: PlayStationLibrary_Builtin
+Packages:
+  - Version: 2.0
+    RequiredApiVersion: 6.0.0
+    ReleaseDate: 2021-01-02
+    PackageUrl: https://github.com/XenorPLxx/playnite-library-psn/releases/download/2.0/PlayStationLibrary_Builtin_2_0.pext
+    Changelog:
+      - Playnite 9 support
+      - Switched to the new API for authentication
+      - Switched to the new API for game retrieval (all digital games owned and last 100 games played)
+      - Changed Game Id (incompatible with previous versions of the extension, so it will cause duplicates if you used previous version)
+      - Some non-digital games that weren't played recently might still be missing from the list
