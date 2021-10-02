@@ -59,23 +59,40 @@ namespace PSNLibrary.Models
 
     public class AccountTitles
     {
-        public class Title
-        {
-            public string titleId { get; set; }
-            public string name { get; set; }
-            public string image { get; set; }
-            public string privacy { get; set; }
-
-            public override string ToString()
+        public class Data { 
+            public class TitlesRetrieve
             {
-                return name;
-            }
-        }
+                public class Title
+                {
+                    public string titleId { get; set; }
+                    public string name { get; set; }
+                    //public string image { get; set; }
+                    //public string privacy { get; set; }
 
-        public int start { get; set; }
-        public int size { get; set; }
-        public int totalResults { get; set; }
-        public List<Title> titles { get; set; }
+                    public override string ToString()
+                    {
+                        return name;
+                    }
+                }
+
+                public class PageInfo { 
+                    public bool isLast { get; set; }
+                    public int offset { get; set; }
+                    public int size { get; set; }
+                    public int totalCount { get; set; }
+                }
+
+                public List<Title> games { get; set; }
+
+                public PageInfo pageInfo;
+            }
+
+            public TitlesRetrieve purchasedTitlesRetrieve { get; set; }
+            //public int start { get; set; }
+            //public int size { get; set; }
+            //public int totalResults { get; set; }
+        }
+        public Data data { get; set; }
     }
 
     public class ProfileInfo

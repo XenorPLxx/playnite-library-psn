@@ -23,7 +23,7 @@ namespace PSNLibrary
             get
             {
                 return false;
-                //return clientApi.GetIsUserLoggedIn().GetAwaiter().GetResult();
+                //return clientApi.GetIsUserLoggedIn();
             }
         }
 
@@ -37,7 +37,7 @@ namespace PSNLibrary
 
         public PSNLibrarySettingsViewModel(PSNLibrary plugin, IPlayniteAPI api) : base(plugin, api)
         {
-            clientApi = new PSNAccountClient(plugin);
+            clientApi = new PSNAccountClient(plugin, api);
             var savedSettings = LoadSavedSettings();
             if (savedSettings != null)
             {

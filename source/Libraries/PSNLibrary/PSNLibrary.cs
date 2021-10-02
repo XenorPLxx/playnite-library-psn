@@ -184,18 +184,26 @@ namespace PSNLibrary
         public override IEnumerable<Game> ImportGames(LibraryImportGamesArgs args)
         {
             var importedGames = new List<Game>();
+
+            //var clientApi = new PSNAccountClient(this, PlayniteApi);
+            //var allGames = new List<GameMetadata>();
+            //allGames.AddRange(ParseAccountList(clientApi));
+
+            //return importedGames;
+
+
             Exception importError = null;
-            if (!SettingsViewModel.Settings.ConnectAccount)
-            {
-                return importedGames;
-            }
+            //if (!SettingsViewModel.Settings.ConnectAccount)
+            //{
+            //    return importedGames;
+            //}
 
             try
             {
-                var clientApi = new PSNAccountClient(this);
+                var clientApi = new PSNAccountClient(this, PlayniteApi);
                 var allGames = new List<GameMetadata>();
                 allGames.AddRange(ParseAccountList(clientApi));
-                allGames.AddRange(ParseThrophies(clientApi));
+                //allGames.AddRange(ParseThrophies(clientApi));
 
                 foreach (var group in allGames.GroupBy(a => a.Name.ToLower().Replace(":", "")))
                 {
