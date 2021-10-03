@@ -1,8 +1,14 @@
 AddonId: PlayStationLibrary_Builtin
 Packages:
+  - Version: 2.1
+    RequiredApiVersion: 6.0.0
+    ReleaseDate: 2021-10-03
+    PackageUrl: https://github.com/XenorPLxx/playnite-library-psn/releases/download/2.1/PlayStationLibrary_Builtin_2_1.pext
+    Changelog:
+      - Added a toggle to control image metadata downloading from PSN
   - Version: 2.0
     RequiredApiVersion: 6.0.0
-    ReleaseDate: 2021-01-02
+    ReleaseDate: 2021-10-02
     PackageUrl: https://github.com/XenorPLxx/playnite-library-psn/releases/download/2.0/PlayStationLibrary_Builtin_2_0.pext
     Changelog:
       - Playnite 9 support
