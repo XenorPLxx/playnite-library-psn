@@ -12,6 +12,7 @@ namespace PSNLibrary
     public class PSNLibrarySettings
     {
         public bool ConnectAccount { get; set; } = false;
+        public bool DownloadImageMetadata { get; set; } = true;
     }
 
     public class PSNLibrarySettingsViewModel : PluginSettingsViewModel<PSNLibrarySettings, PSNLibrary>

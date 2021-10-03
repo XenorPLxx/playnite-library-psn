@@ -20,6 +20,10 @@
                   IsChecked="{Binding Settings.ConnectAccount}"
                   Content="{DynamicResource LOCSettingsConnectAccount}"/>
 
+        <CheckBox Name="CheckPSNDownloadImageMetadata"
+                  IsChecked="{Binding Settings.DownloadImageMetadata}"
+                  Content="{DynamicResource LOCSettingsDonwloadImageMetadata}"/>
+
         <StackPanel DockPanel.Dock="Top" Margin="40,5,5,0"
                     IsEnabled="{Binding IsChecked, ElementName=CheckPSNConnectAccount}">
             

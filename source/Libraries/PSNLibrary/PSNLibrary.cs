@@ -86,7 +86,7 @@ namespace PSNLibrary
                 {
                     GameId = title.titleId,
                     Name = gameName,
-                    CoverImage = new MetadataFile(title.image.url),
+                    CoverImage = SettingsViewModel.Settings.DownloadImageMetadata ? new MetadataFile(title.image.url) : null,
                     Platforms = new HashSet<MetadataProperty> { new MetadataSpecProperty(platform) }
                 });
             }
@@ -108,7 +108,7 @@ namespace PSNLibrary
                 {
                     GameId = title.titleId,
                     Name = gameName,
-                    CoverImage = new MetadataFile(title.image.url),
+                    CoverImage = SettingsViewModel.Settings.DownloadImageMetadata ? new MetadataFile(title.image.url) : null,
                     Platforms = new HashSet<MetadataProperty> { new MetadataSpecProperty(platform) }
                 });
             }
@@ -252,9 +252,8 @@ namespace PSNLibrary
                 allGames.AddRange(ParsePlayedList(clientApi));
                 //allGames.AddRange(ParseThrophies(clientApi));
 
-                foreach (var group in allGames.GroupBy(a => a.GameId))
+                foreach (var game in allGames)
                 {
-                    var game = group.First();
                     if (PlayniteApi.ApplicationSettings.GetGameExcludedFromImport(game.GameId, Id))
                     {
                         continue;
