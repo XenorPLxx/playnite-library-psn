@@ -252,8 +252,10 @@ namespace PSNLibrary
                 allGames.AddRange(ParsePlayedList(clientApi));
                 //allGames.AddRange(ParseThrophies(clientApi));
 
-                foreach (var game in allGames)
+                // This need to happen to merge games from different APIs
+                foreach (var group in allGames.GroupBy(a => a.GameId))
                 {
+                    var game = group.First();
                     if (PlayniteApi.ApplicationSettings.GetGameExcludedFromImport(game.GameId, Id))
                     {
                         continue;
