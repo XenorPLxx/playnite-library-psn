@@ -42,6 +42,7 @@ namespace PSNLibrary.Services
         private const string mobileTokenAuth = "YWM4ZDE2MWEtZDk2Ni00NzI4LWIwZWEtZmZlYzIyZjY5ZWRjOkRFaXhFcVhYQ2RYZHdqMHY=";
         private const string playedMobileListUrl = "https://m.np.playstation.net/api/gamelist/v2/users/me/titles?categories=ps4_game,ps5_native_game&limit=250&offset={0}";
         private const string trophiesMobileUrl = @"https://m.np.playstation.net/api/trophy/v1/users/me/trophyTitles?limit=250&offset={0}";
+        private const string trophiesWithIdsMobileUrl = @"https://m.np.playstation.net/api/trophy/v1/users/me/titles/trophyTitles?npTitleIds={0}";
 
         public PSNAccountClient(PSNLibrary library, IPlayniteAPI api)
         {
@@ -84,17 +85,8 @@ namespace PSNLibrary.Services
             return;
         }
   
-        //        // matching games to trophies for 1.0 migration
-        //        HttpRequestMessage requestMessage4 = new HttpRequestMessage(new HttpMethod("get"), "https://m.np.playstation.net/api/trophy/v1/users/me/titles/trophyTitles?npTitleIds=PPSA01968_00,PPSA01802_00,PPSA01632_00");
-        //        requestMessage4.Headers.Authorization = new AuthenticationHeaderValue("Bearer", tokens.access_token);
-        //        var resp4 = await httpClient.SendAsync(requestMessage4);
-        //        var strResponse4 = await resp4.Content.ReadAsStringAsync();
 
-        //        // playtimes
-        //        HttpRequestMessage requestMessage5 = new HttpRequestMessage(new HttpMethod("get"), "https://m.np.playstation.net/api/gamelist/v2/users/me/titles?categories=ps4_game,ps5_native_game&limit=250&offset=0");
-        //        requestMessage5.Headers.Authorization = new AuthenticationHeaderValue("Bearer", tokens.access_token);
-        //        var resp5 = await httpClient.SendAsync(requestMessage5);
-        //        var strResponse5 = await resp5.Content.ReadAsStringAsync();
+
 
         private IEnumerable<Playnite.SDK.HttpCookie> dumpCookies()
         {
@@ -300,11 +292,11 @@ namespace PSNLibrary.Services
             return titles;
         }
 
-        public async Task<List<TrophyTitlesMobile.TrophyTitleMobile>> GetTrohpiesMobile()
+        public async Task<List<TrophyTitleMobile>> GetTrohpiesMobile()
         {
             await CheckAuthentication();
 
-            var titles = new List<TrophyTitlesMobile.TrophyTitleMobile>();
+            var titles = new List<TrophyTitleMobile>();
 
             var cookieContainer = ReadCookiesFromDisk();
             using (var handler = new HttpClientHandler() { CookieContainer = cookieContainer })
@@ -326,6 +318,36 @@ namespace PSNLibrary.Services
 
             return titles;
         }
+
+
+        public async Task<List<TrophyTitlesWithIdsMobile.TrophyTitleWithIdsMobile>> GetTrohpiesWithIdsMobile(string[] titleIdsArray)
+        {
+            await CheckAuthentication();
+
+            var titles = new List<TrophyTitlesWithIdsMobile.TrophyTitleWithIdsMobile>();
+
+            var cookieContainer = ReadCookiesFromDisk();
+            using (var handler = new HttpClientHandler() { CookieContainer = cookieContainer })
+            using (var httpClient = new HttpClient(handler))
+            {
+                int querySize = 5;
+                int offset = 0;                
+
+                do
+                {
+                    HttpRequestMessage requestMessage = new HttpRequestMessage(new HttpMethod("get"), trophiesWithIdsMobileUrl.Format(string.Join(",", titleIdsArray.Skip(offset).Take(querySize))));
+                    requestMessage.Headers.Authorization = new AuthenticationHeaderValue("Bearer", mobileToken.access_token);
+                    var resp = await httpClient.SendAsync(requestMessage);
+                    var strResponse = await resp.Content.ReadAsStringAsync();
+                    var titles_part = Serialization.FromJson<TrophyTitlesWithIdsMobile>(strResponse);
+                    titles.AddRange(titles_part.titles);
+                    offset = offset + querySize;
+                } while (offset < titleIdsArray.Length);
+            }
+
+            return titles;
+        }
+
 
         private string GetStoredToken()
         {

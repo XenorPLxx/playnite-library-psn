@@ -121,25 +121,36 @@ namespace PSNLibrary.Models
         public int totalItemCount { get; set; }
     }
 
+    public class TrophyTitleMobile
+    {
+
+        public string trophyTitleIconUrl { get; set; }
+        public string trophyTitleName { get; set; }
+        public string trophyTitlePlatform { get; set; }
+        public string npCommunicationId { get; set; }
+
+        public override string ToString()
+        {
+            return trophyTitleName;
+        }
+    }
+
     public class TrophyTitlesMobile
     {
-        public class TrophyTitleMobile
-        {
-
-            public string trophyTitleIconUrl { get; set; }
-            public string trophyTitleName { get; set; }
-            public string trophyTitlePlatform { get; set; }
-            public string npCommunicationId { get; set; }
-
-            public override string ToString()
-            {
-                return trophyTitleName;
-            }
-        }
-
         public List<TrophyTitleMobile> trophyTitles { get; set; }
         public int? nextOffset { get; set; }
         public int totalItemCount { get; set; }
+    }
+
+    public class TrophyTitlesWithIdsMobile
+    {
+        public class TrophyTitleWithIdsMobile
+        {
+            public string npTitleId { get; set; }
+            public List<TrophyTitleMobile> trophyTitles { get; set; }
+        }
+
+        public List<TrophyTitleWithIdsMobile> titles { get; set; }
     }
 
     public class MobileTokens

@@ -16,6 +16,7 @@ namespace PSNLibrary
         public bool PS3 { get; set; } = true;
         public bool PSP { get; set; } = true;
         public bool PSVITA { get; set; } = true;
+        public bool Migration { get; set; } = true;
     }
 
     public class PSNLibrarySettingsViewModel : PluginSettingsViewModel<PSNLibrarySettings, PSNLibrary>

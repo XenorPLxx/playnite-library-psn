@@ -3,6 +3,7 @@
     <sys:String x:Key="LOCSettingsImportUninstalledLabel">Import not installed games</sys:String>
     <sys:String x:Key="LOCSettingsConnectAccount">Connect account</sys:String>
     <sys:String x:Key="LOCSettingsDonwloadImageMetadata">Download image metadata from PSN</sys:String>
+    <sys:String x:Key="LOCSettingsMigration">Try to migrate games from the old plugin on the next library update</sys:String>
     <sys:String x:Key="LOCSettingsLegacyGames">Try do download older games from Trophies API:</sys:String>
     <sys:String x:Key="LOCSettingsDownloadPS3">PS3</sys:String>
     <sys:String x:Key="LOCSettingsDownloadPSP">PSP</sys:String>

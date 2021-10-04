@@ -22,19 +22,28 @@
 
         <CheckBox Name="CheckPSNDownloadImageMetadata"
                   IsChecked="{Binding Settings.DownloadImageMetadata}"
-                  Content="{DynamicResource LOCSettingsDonwloadImageMetadata}"/>
+                  Content="{DynamicResource LOCSettingsDonwloadImageMetadata}"
+                  Margin="0,4,0,0"/>
+
+        <CheckBox Name="CheckPSNMigration"
+                  IsChecked="{Binding Settings.Migration}"
+                  Content="{DynamicResource LOCSettingsMigration}"
+                  Margin="0,4,0,0"/>
 
         <StackPanel Margin="0,20,0,0">
             <Label Content="{DynamicResource LOCSettingsLegacyGames}"></Label>
             <CheckBox Name="CheckPSNDownloadPS3"
                   IsChecked="{Binding Settings.PS3}"
-                  Content="{DynamicResource LOCSettingsDownloadPS3}"/>
+                  Content="{DynamicResource LOCSettingsDownloadPS3}"
+                  Margin="0,4,0,0"/>
             <CheckBox Name="CheckPSNDownloadPSP"
                       IsChecked="{Binding Settings.PSP}"
-                      Content="{DynamicResource LOCSettingsDownloadPSP}"/>
+                      Content="{DynamicResource LOCSettingsDownloadPSP}"
+                  Margin="0,4,0,0"/>
             <CheckBox Name="CheckPSNDownloadPSVITA"
                       IsChecked="{Binding Settings.PSVITA}"
-                      Content="{DynamicResource LOCSettingsDownloadPSVITA}"/>
+                      Content="{DynamicResource LOCSettingsDownloadPSVITA}"
+                  Margin="0,4,0,0"/>
         </StackPanel>
 
         <StackPanel DockPanel.Dock="Top" Margin="40,5,5,0"

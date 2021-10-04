@@ -223,6 +223,32 @@ namespace PSNLibrary
             return parsedGames;
         }
 
+        private void MigrateGames(PSNAccountClient clientApi, List<GameMetadata> games)
+        {
+            SettingsViewModel.BeginEdit();
+            SettingsViewModel.Settings.Migration = false;
+            SettingsViewModel.EndEdit();
+
+            string[] titleIdsArray = games.GroupBy(x => x.GameId).Select(x => x.FirstOrDefault()).Select(x => x.GameId).ToArray();
+
+            var gamesWithIds = clientApi.GetTrohpiesWithIdsMobile(titleIdsArray).GetAwaiter().GetResult();
+
+            foreach (var game in PlayniteApi.Database.Games)
+            {
+                if (game.GameId.Contains("#ACCOUNT#"))
+                {
+                    game.GameId = game.GameId.Substring(9);
+                }
+                else if (game.GameId.Contains("#TROPHY#"))
+                {
+                    var communicationId = game.GameId.Substring(8);
+                    string npTitleId = gamesWithIds.FirstOrDefault(p => p.trophyTitles.Any(c => c.npCommunicationId == communicationId))?.npTitleId ?? null;
+                    game.GameId = npTitleId != null ? npTitleId : communicationId;
+                }
+                PlayniteApi.Database.Games.Update(game);
+            }
+        }
+
         public override IEnumerable<Game> ImportGames(LibraryImportGamesArgs args)
         {
             var importedGames = new List<Game>();
@@ -240,6 +266,13 @@ namespace PSNLibrary
                 allGames.AddRange(ParsePlayedMobileList(clientApi));
                 allGames.AddRange(ParsePlayedList(clientApi));
                 allGames.AddRange(ParseAccountList(clientApi));
+
+                // Migration is based on API that accepts titleId, that's why ParseThrophies is excluded
+                if (SettingsViewModel.Settings.Migration)
+                {
+                    MigrateGames(clientApi, allGames);
+                }
+                
                 allGames.AddRange(ParseThrophies(clientApi));
 
                 // This need to happen to merge games from different APIs
