@@ -229,7 +229,7 @@ namespace PSNLibrary
             SettingsViewModel.Settings.Migration = false;
             SettingsViewModel.EndEdit();
 
-            var pluginGames = PlayniteApi.Database.Games.Where(x => x.PluginId == Guid.Parse("e4ac81cb-1b1a-4ec9-8639-9a9633989a71"));
+            var pluginGames = PlayniteApi.Database.Games.Where(x => x.PluginId == Id);
 
             if (pluginGames.Count() > 0)
             {

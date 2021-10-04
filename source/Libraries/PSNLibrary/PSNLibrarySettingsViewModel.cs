@@ -11,7 +11,7 @@ namespace PSNLibrary
 {
     public class PSNLibrarySettings
     {
-        public bool ConnectAccount { get; set; } = false;
+        public bool ConnectAccount { get; set; } = true;
         public bool DownloadImageMetadata { get; set; } = true;
         public bool PS3 { get; set; } = true;
         public bool PSP { get; set; } = true;
