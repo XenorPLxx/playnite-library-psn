@@ -229,23 +229,29 @@ namespace PSNLibrary
             SettingsViewModel.Settings.Migration = false;
             SettingsViewModel.EndEdit();
 
-            string[] titleIdsArray = games.GroupBy(x => x.GameId).Select(x => x.FirstOrDefault()).Select(x => x.GameId).ToArray();
+            var pluginGames = PlayniteApi.Database.Games.Where(x => x.PluginId == Guid.Parse("e4ac81cb-1b1a-4ec9-8639-9a9633989a71"));
 
-            var gamesWithIds = clientApi.GetTrohpiesWithIdsMobile(titleIdsArray).GetAwaiter().GetResult();
-
-            foreach (var game in PlayniteApi.Database.Games)
+            if (pluginGames.Count() > 0)
             {
-                if (game.GameId.Contains("#ACCOUNT#"))
+                string[] titleIdsArray = games.GroupBy(x => x.GameId).Select(x => x.FirstOrDefault()).Select(x => x.GameId).ToArray();
+
+                var gamesWithIds = clientApi.GetTrohpiesWithIdsMobile(titleIdsArray).GetAwaiter().GetResult();
+
+                foreach (var game in pluginGames)
                 {
-                    game.GameId = game.GameId.Substring(9);
+                    if (game.GameId.Contains("#ACCOUNT#"))
+                    {
+                        game.GameId = game.GameId.Substring(9);
+                        PlayniteApi.Database.Games.Update(game);
+                    }
+                    else if (game.GameId.Contains("#TROPHY#"))
+                    {
+                        var communicationId = game.GameId.Substring(8);
+                        string npTitleId = gamesWithIds.FirstOrDefault(p => p.trophyTitles.Any(c => c.npCommunicationId == communicationId))?.npTitleId ?? null;
+                        game.GameId = npTitleId != null ? npTitleId : communicationId;
+                        PlayniteApi.Database.Games.Update(game);
+                    }
                 }
-                else if (game.GameId.Contains("#TROPHY#"))
-                {
-                    var communicationId = game.GameId.Substring(8);
-                    string npTitleId = gamesWithIds.FirstOrDefault(p => p.trophyTitles.Any(c => c.npCommunicationId == communicationId))?.npTitleId ?? null;
-                    game.GameId = npTitleId != null ? npTitleId : communicationId;
-                }
-                PlayniteApi.Database.Games.Update(game);
             }
         }
 

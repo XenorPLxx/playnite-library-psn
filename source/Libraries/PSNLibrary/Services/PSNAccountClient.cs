@@ -85,12 +85,9 @@ namespace PSNLibrary.Services
             return;
         }
   
-
-
-
         private IEnumerable<Playnite.SDK.HttpCookie> dumpCookies()
         {
-            var view = api.WebViews.CreateView(1000, 800);
+            var view = api.WebViews.CreateOffscreenView();
 
             var cookies = view.GetCookies(); 
 
@@ -162,14 +159,23 @@ namespace PSNLibrary.Services
             using (var handler = new HttpClientHandler() { CookieContainer = cookieContainer })
             using (var httpClient = new HttpClient(handler))
             {
-                var mobileCodeResponse = await httpClient.GetAsync(mobileCodeUrl);
-
                 string mobileCode;
-                try { 
-                    mobileCode =  HttpUtility.ParseQueryString(mobileCodeResponse.Headers.Location.Query)["code"]; 
+                try
+                {
+                    var mobileCodeResponse = await httpClient.GetAsync(mobileCodeUrl);
+                    mobileCode = HttpUtility.ParseQueryString(mobileCodeResponse.Headers.Location.Query)["code"]; 
                 } 
                 catch {
-                    return false;
+                    TryRefreshCookies();
+                    try
+                    {
+                        var mobileCodeResponse = await httpClient.GetAsync(mobileCodeUrl);
+                        mobileCode = HttpUtility.ParseQueryString(mobileCodeResponse.Headers.Location.Query)["code"];
+                    }
+                    catch
+                    {
+                        return false;
+                    }
                 }
 
                 HttpRequestMessage requestMessage = new HttpRequestMessage(new HttpMethod("post"), mobileTokenUrl);
@@ -348,16 +354,21 @@ namespace PSNLibrary.Services
             return titles;
         }
 
-
-        private string GetStoredToken()
+        private void TryRefreshCookies()
         {
-            var token = string.Empty;
-            if (File.Exists(tokenPath))
+            string address;
+            using (var webView = api.WebViews.CreateOffscreenView())
             {
-                token = File.ReadAllText(tokenPath);
+                webView.LoadingChanged += (s, e) =>
+                {
+                    address = webView.GetCurrentAddress();
+                    webView.Close();
+                };
+
+                webView.NavigateAndWait(loginUrl);
             }
 
-            return token;
+            dumpCookies();
         }
 
         public async Task<bool> GetIsUserLoggedIn()
