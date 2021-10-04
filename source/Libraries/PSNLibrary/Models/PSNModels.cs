@@ -152,6 +152,28 @@ namespace PSNLibrary.Models
         public AccountTitlesResponseData data { get; set; }
     }
 
+    public class PlayedTitlesMobile
+    {
+        public class PlayedTitleMobile
+        {
+            
+            public string imageUrl { get; set; }
+            public string name { get; set; }
+            public string category { get; set; }
+            public string titleId { get; set; }
+
+            public override string ToString()
+            {
+                return name;
+            }
+        }
+
+        public List<PlayedTitleMobile> titles { get; set; }
+        public int? nextOffset { get; set; }
+        public int previousOffset { get; set; }
+        public int totalItemCount { get; set; }
+    }
+
     //    public class ProfileInfo
     //    {
     //        public class Profile
@@ -274,4 +296,9 @@ namespace PSNLibrary.Models
     //        PSP = 1073741824,
     //        PSVITA = 134217728
     //    }
+
+    public class MobileTokens
+    {
+        public string access_token { get; set; }
+    }
 }
