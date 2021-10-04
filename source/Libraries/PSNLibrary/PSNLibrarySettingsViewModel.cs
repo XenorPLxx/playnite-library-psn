@@ -13,6 +13,9 @@ namespace PSNLibrary
     {
         public bool ConnectAccount { get; set; } = false;
         public bool DownloadImageMetadata { get; set; } = true;
+        public bool PS3 { get; set; } = true;
+        public bool PSP { get; set; } = true;
+        public bool PSVITA { get; set; } = true;
     }
 
     public class PSNLibrarySettingsViewModel : PluginSettingsViewModel<PSNLibrarySettings, PSNLibrary>

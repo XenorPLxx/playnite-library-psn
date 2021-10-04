@@ -174,113 +174,54 @@ namespace PSNLibrary
         {
             var gamesToParse = clientApi.GetPlayedTitlesMobile().GetAwaiter().GetResult();
             return parseGames(gamesToParse);
-        }        
+        }
 
-        //private List<GameMetadata> ParseThrophies(PSNAccountClient clientApi)
-        //{
-        //    var parsedGames = new List<GameMetadata>();
-        //    foreach (var title in clientApi.GetThropyTitles().GetAwaiter().GetResult())
-        //    {
-        //        var gameName = FixGameName(title.trophyTitleName);
-        //        gameName = gameName.
-        //            TrimEndString("Trophies", StringComparison.OrdinalIgnoreCase).
-        //            TrimEndString("Trophy", StringComparison.OrdinalIgnoreCase).
-        //            Trim();
-        //        var newGame = new GameMetadata
-        //        {
-        //            GameId = "#TROPHY#" + title.npCommunicationId,
-        //            Name = gameName
-        //        };
+        private List<GameMetadata> ParseThrophies(PSNAccountClient clientApi)
+        {
+            var parsedGames = new List<GameMetadata>();
+            foreach (var title in clientApi.GetTrohpiesMobile().GetAwaiter().GetResult())
+            {
+                var gameName = FixGameName(title.trophyTitleName);
+                gameName = gameName.
+                    TrimEndString("Trophies", StringComparison.OrdinalIgnoreCase).
+                    TrimEndString("Trophy", StringComparison.OrdinalIgnoreCase).
+                    Trim();
 
-        //        if (title.trophyTitlePlatfrom?.Contains("PS4") == true)
-        //        {
-        //            newGame.Platforms = new HashSet<MetadataProperty> { new MetadataSpecProperty("sony_playstation4") };
-        //        }
-        //        else if (title.trophyTitlePlatfrom?.Contains("PS3") == true)
-        //        {
-        //            newGame.Platforms = new HashSet<MetadataProperty> { new MetadataSpecProperty("sony_playstation3") };
-        //        }
-        //        else if (title.trophyTitlePlatfrom?.Contains("PSVITA") == true)
-        //        {
-        //            newGame.Platforms = new HashSet<MetadataProperty> { new MetadataSpecProperty("sony_vita") };
-        //        }
-        //        else if (title.trophyTitlePlatfrom?.Contains("PSP") == true)
-        //        {
-        //            newGame.Platforms = new HashSet<MetadataProperty> { new MetadataSpecProperty("sony_psp") };
-        //        }
+                var newGame = new GameMetadata
+                {
+                    GameId = title.npCommunicationId,
+                    Name = gameName
+                };
 
-        //        parsedGames.Add(newGame);
-        //    }
+                var legacyGames = false;
 
-        //    return parsedGames;
-        //}
+                newGame.Platforms = new HashSet<MetadataProperty> { };
 
-        //private List<GameMetadata> ParseDownloadList(PSNAccountClient clientApi)
-        //{
-        //    var parsedGames = new List<GameMetadata>();
-        //    foreach (var item in clientApi.GetDownloadList().GetAwaiter().GetResult())
-        //    {
-        //        if (item.drm_def?.contentType == "TV")
-        //        {
-        //            continue;
-        //        }
-        //        else if (item.entitlement_type == 1 || item.entitlement_type == 4) // Not games
-        //        {
-        //            continue;
-        //        }
-        //        else if (item.game_meta?.package_sub_type == "MISC_THEME" ||
-        //                 item.game_meta?.package_sub_type == "MISC_AVATAR")
-        //        {
-        //            continue;
-        //        }
+                if (title.trophyTitlePlatform?.Contains("PSP") == true && SettingsViewModel.Settings.PSP)
+                {
+                    newGame.Platforms.Add(new MetadataSpecProperty("sony_psp"));
+                    legacyGames = true;
+                }
+                else if (title.trophyTitlePlatform?.Contains("PSVITA") == true && SettingsViewModel.Settings.PSVITA)
+                {
+                    newGame.Platforms.Add(new MetadataSpecProperty("sony_vita"));
+                    legacyGames = true;
+                }
+                else if (title.trophyTitlePlatform?.Contains("PS3") == true && SettingsViewModel.Settings.PS3)
+                {
+                    newGame.Platforms.Add(new MetadataSpecProperty("sony_playstation3"));
+                    legacyGames = true;
+                }
 
-        //        var newGame = new GameMetadata();
-        //        newGame.GameId = "#DLIST#" + item.id;
+                // PS4 and PS5 games are added based on different APIs, but for PS3/VITA/PSP games only trophies API is available.
+                if (legacyGames)
+                {
+                    parsedGames.Add(newGame);
+                }
+            }
 
-        //        if (item.entitlement_attributes != null) // PS4
-        //        {
-        //            newGame.Name = item.game_meta.name;
-        //            newGame.Platforms = new HashSet<MetadataProperty> { new MetadataSpecProperty("sony_playstation4") };
-        //        }
-        //        else if (item.drm_def != null) //PS3, PSP, or Vita
-        //        {
-        //            newGame.Name = item.drm_def.contentName;
-        //            if (item.drm_def.drmContents.HasItems())
-        //            {
-        //                var plat = ParseOldPlatform(item.drm_def.drmContents[0].platformIds);
-        //                if (!plat.IsNullOrEmpty())
-        //                {
-        //                    newGame.Platforms = new HashSet<MetadataProperty> { new MetadataSpecProperty(plat) };
-        //                }
-        //            }
-        //        }
-        //        else
-        //        {
-        //            continue;
-        //        }
-
-        //        if (newGame.Name.IsNullOrEmpty())
-        //        {
-        //            continue;
-        //        }
-
-        //        if (newGame.Name.Contains("demo", StringComparison.OrdinalIgnoreCase) ||
-        //            newGame.Name.Contains("trial", StringComparison.OrdinalIgnoreCase) ||
-        //            newGame.Name.Contains("language pack", StringComparison.OrdinalIgnoreCase) ||
-        //            newGame.Name.Contains("skin pack", StringComparison.OrdinalIgnoreCase) ||
-        //            newGame.Name.Contains("multiplayer pack", StringComparison.OrdinalIgnoreCase) ||
-        //            newGame.Name.Contains("compatibility pack", StringComparison.OrdinalIgnoreCase) ||
-        //            newGame.Name.EndsWith("theme", StringComparison.OrdinalIgnoreCase))
-        //        {
-        //            continue;
-        //        }
-
-        //        newGame.Name = FixGameName(newGame.Name);
-        //        parsedGames.Add(newGame);
-        //    }
-
-        //    return parsedGames;
-        //}
+            return parsedGames;
+        }
 
         public override IEnumerable<Game> ImportGames(LibraryImportGamesArgs args)
         {
@@ -299,8 +240,7 @@ namespace PSNLibrary
                 allGames.AddRange(ParsePlayedMobileList(clientApi));
                 allGames.AddRange(ParsePlayedList(clientApi));
                 allGames.AddRange(ParseAccountList(clientApi));
-                
-                //allGames.AddRange(ParseThrophies(clientApi));
+                allGames.AddRange(ParseThrophies(clientApi));
 
                 // This need to happen to merge games from different APIs
                 foreach (var group in allGames.GroupBy(a => a.GameId))
