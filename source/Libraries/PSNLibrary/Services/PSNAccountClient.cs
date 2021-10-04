@@ -208,14 +208,21 @@ namespace PSNLibrary.Services
             }
         }
 
-        private async Task getMobileToken()
+        private async Task<bool> getMobileToken()
         {
             var cookieContainer = ReadCookiesFromDisk();
             using (var handler = new HttpClientHandler() { CookieContainer = cookieContainer })
             using (var httpClient = new HttpClient(handler))
             {
                 var mobileCodeResponse = await httpClient.GetAsync(mobileCodeUrl);
-                var mobileCode = HttpUtility.ParseQueryString(mobileCodeResponse.Headers.Location.Query)["code"];
+
+                string mobileCode;
+                try { 
+                    mobileCode =  HttpUtility.ParseQueryString(mobileCodeResponse.Headers.Location.Query)["code"]; 
+                } 
+                catch {
+                    return false;
+                }
 
                 HttpRequestMessage requestMessage = new HttpRequestMessage(new HttpMethod("post"), mobileTokenUrl);
                 var requestMessageForm = new List<KeyValuePair<string, string>>();
@@ -229,10 +236,11 @@ namespace PSNLibrary.Services
                 var mobileTokenResponse = await httpClient.SendAsync(requestMessage);
                 var strResponse = await mobileTokenResponse.Content.ReadAsStringAsync();
                 mobileToken = Serialization.FromJson<MobileTokens>(strResponse);
+                return true;
             }
         }
 
-        private async Task CheckAuthentication()
+        public async Task CheckAuthentication()
         {
             if (!File.Exists(tokenPath))
             {
@@ -248,7 +256,10 @@ namespace PSNLibrary.Services
                 {
                     if (mobileToken == null)
                     {
-                        await getMobileToken();
+                        if (!await getMobileToken())                        
+                        {
+                            throw new Exception("User is not authenticated.");
+                        }
                     }
                 }
             }

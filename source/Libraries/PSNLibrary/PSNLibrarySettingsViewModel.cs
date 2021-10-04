@@ -23,7 +23,15 @@ namespace PSNLibrary
         {
             get
             {
-                return clientApi.GetIsUserLoggedIn().GetAwaiter().GetResult();
+                try
+                {
+                    clientApi.CheckAuthentication().GetAwaiter().GetResult();
+                    return true;
+                }
+                catch
+                {
+                    return false;
+                }
             }
         }
 
