@@ -16,6 +16,8 @@ using System.Security.Principal;
 using System.Web;
 using System.Net;
 using System.Runtime.Serialization.Formatters.Binary;
+using System.Net.Http.Headers;
+using System.Security;
 
 namespace PSNLibrary.Services
 {
@@ -28,12 +30,17 @@ namespace PSNLibrary.Services
     {
         private static readonly ILogger logger = LogManager.GetLogger();
         private IPlayniteAPI api;
+        private MobileTokens mobileToken;
         private readonly PSNLibrary library;
         private readonly string tokenPath;
         private const int pageRequestLimit = 100;
         private const string loginUrl = @"https://web.np.playstation.com/api/session/v1/signin?redirect_uri=https://io.playstation.com/central/auth/login%3FpostSignInURL=https://www.playstation.com/home%26cancelURL=https://www.playstation.com/home&smcid=web:pdc";
         private const string gameListUrl = "https://web.np.playstation.com/api/graphql/v1/op?operationName=getPurchasedGameList&variables={{\"isActive\":true,\"platform\":[\"ps3\",\"ps4\",\"ps5\"],\"start\":{0},\"size\":{1},\"subscriptionService\":\"NONE\"}}&extensions={{\"persistedQuery\":{{\"version\":1,\"sha256Hash\":\"2c045408b0a4d0264bb5a3edfed4efd49fb4749cf8d216be9043768adff905e2\"}}}}";
         private const string playedListUrl = "https://web.np.playstation.com/api/graphql/v1/op?operationName=getUserGameList&variables=%7B%22limit%22%3A100%2C%22categories%22%3A%22ps4_game%2Cps5_native_game%22%7D&extensions=%7B%22persistedQuery%22%3A%7B%22version%22%3A1%2C%22sha256Hash%22%3A%22e780a6d8b921ef0c59ec01ea5c5255671272ca0d819edb61320914cf7a78b3ae%22%7D%7D";
+        private const string mobileCodeUrl = @"https://ca.account.sony.com/api/authz/v3/oauth/authorize?access_type=offline&client_id=ac8d161a-d966-4728-b0ea-ffec22f69edc&redirect_uri=com.playstation.PlayStationApp%3A%2F%2Fredirect&response_type=code&scope=psn%3Amobile.v1%20psn%3Aclientapp";
+        private const string mobileTokenUrl = "https://ca.account.sony.com/api/authz/v3/oauth/token";
+        private const string mobileTokenAuth = "YWM4ZDE2MWEtZDk2Ni00NzI4LWIwZWEtZmZlYzIyZjY5ZWRjOkRFaXhFcVhYQ2RYZHdqMHY=";
+        private const string playedMobileListUrl = "https://m.np.playstation.net/api/gamelist/v2/users/me/titles?categories=ps4_game,ps5_native_game&limit=250&offset={0}";
 
         //private const string loginTokenUrl = @"https://ca.account.sony.com/api/v1/oauth/authorize?response_type=token&scope=capone:report_submission,kamaji:game_list,kamaji:get_account_hash,user:account.get,user:account.profile.get,kamaji:social_get_graph,kamaji:ugc:distributor,user:account.identityMapper,kamaji:music_views,kamaji:activity_feed_get_feed_privacy,kamaji:activity_feed_get_news_feed,kamaji:activity_feed_submit_feed_story,kamaji:activity_feed_internal_feed_submit_story,kamaji:account_link_token_web,kamaji:ugc:distributor_web,kamaji:url_preview&client_id=656ace0b-d627-47e6-915c-13b259cd06b2&redirect_uri=https://my.playstation.com/auth/response.html?requestID=iframe_request_ecd7cd01-27ad-4851-9c0d-0798c1a65e53&baseUrl=/&targetOrigin=https://my.playstation.com&prompt=none";
         //private const string tokenUrl = @"https://ca.account.sony.com/api/v1/oauth/authorize?response_type=token&scope=capone:report_submission,kamaji:game_list,kamaji:get_account_hash,user:account.get,user:account.profile.get,kamaji:social_get_graph,kamaji:ugc:distributor,user:account.identityMapper,kamaji:music_views,kamaji:activity_feed_get_feed_privacy,kamaji:activity_feed_get_news_feed,kamaji:activity_feed_submit_feed_story,kamaji:activity_feed_internal_feed_submit_story,kamaji:account_link_token_web,kamaji:ugc:distributor_web,kamaji:url_preview&client_id=656ace0b-d627-47e6-915c-13b259cd06b2&redirect_uri=https://my.playstation.com/auth/response.html?requestID=iframe_request_b0f09e04-8206-49be-8be6-b2cfe05249e2&baseUrl=/&targetOrigin=https://my.playstation.com&prompt=none";
@@ -79,21 +86,82 @@ namespace PSNLibrary.Services
                   
             dumpCookies();
 
+            //tryToken();
+
             return;
         }
+  
+        //private async void tryToken()
+        //{
+        //    await CheckAuthentication();
+
+        //    var cookieContainer = ReadCookiesFromDisk();
+        //    using (var handler = new HttpClientHandler() { CookieContainer = cookieContainer })
+        //    using (var httpClient = new HttpClient(handler))
+        //    {
+        //        //var resp = httpClient.GetAsync(@"https://m.np.playstation.net/api/trophy/v1/users/me/titles/trophyTitles?npTitleIds=PPSA01802_00").GetAwaiter().GetResult();
+        //        //var resp2 = httpClient.GetAsync(@"https://ca.account.sony.com/api/v1/ssocookie").GetAwaiter().GetResult();
+        //        var resp = httpClient.GetAsync(@"https://ca.account.sony.com/api/authz/v3/oauth/authorize?access_type=offline&client_id=ac8d161a-d966-4728-b0ea-ffec22f69edc&redirect_uri=com.playstation.PlayStationApp%3A%2F%2Fredirect&response_type=code&scope=psn%3Amobile.v1%20psn%3Aclientapp").GetAwaiter().GetResult();
+        //        var code = HttpUtility.ParseQueryString(resp.Headers.Location.Query)["code"];
+
+        //        HttpRequestMessage requestMessage2 = new HttpRequestMessage(new HttpMethod("post"), "https://ca.account.sony.com/api/authz/v3/oauth/token");
+        //        var nvc2 = new List<KeyValuePair<string, string>>();
+        //        nvc2.Add(new KeyValuePair<string, string>("code", code));
+        //        nvc2.Add(new KeyValuePair<string, string>("redirect_uri", "com.playstation.PlayStationApp://redirect"));
+        //        nvc2.Add(new KeyValuePair<string, string>("grant_type", "authorization_code"));
+        //        nvc2.Add(new KeyValuePair<string, string>("token_format", "jwt"));
+
+        //        requestMessage2.Content = new FormUrlEncodedContent(nvc2);
+        //        requestMessage2.Headers.Authorization = new AuthenticationHeaderValue("Basic", "YWM4ZDE2MWEtZDk2Ni00NzI4LWIwZWEtZmZlYzIyZjY5ZWRjOkRFaXhFcVhYQ2RYZHdqMHY=");
+        //        var cont = await requestMessage2.Content.ReadAsStringAsync();
+        //        var resp2 = await httpClient.SendAsync(requestMessage2);
+        //        var strResponse2 = await resp2.Content.ReadAsStringAsync();
+        //        var tokens = Serialization.FromJson<MobileTokens>(strResponse2);
+
+        //        // only communicationId for PS3 and PSVITA titles - also trophies can be shared between platforms
+        //        HttpRequestMessage requestMessage3 = new HttpRequestMessage(new HttpMethod("get"), "https://m.np.playstation.net/api/trophy/v1/users/me/trophyTitles");
+        //        requestMessage3.Headers.Authorization = new AuthenticationHeaderValue("Bearer", tokens.access_token);
+        //        var resp3 = await httpClient.SendAsync(requestMessage3);
+        //        var strResponse3 = await resp3.Content.ReadAsStringAsync();
+
+        //        // matching games to trophies for 1.0 migration
+        //        HttpRequestMessage requestMessage4 = new HttpRequestMessage(new HttpMethod("get"), "https://m.np.playstation.net/api/trophy/v1/users/me/titles/trophyTitles?npTitleIds=PPSA01968_00,PPSA01802_00,PPSA01632_00");
+        //        requestMessage4.Headers.Authorization = new AuthenticationHeaderValue("Bearer", tokens.access_token);
+        //        var resp4 = await httpClient.SendAsync(requestMessage4);
+        //        var strResponse4 = await resp4.Content.ReadAsStringAsync();
+
+        //        // playtimes
+        //        HttpRequestMessage requestMessage5 = new HttpRequestMessage(new HttpMethod("get"), "https://m.np.playstation.net/api/gamelist/v2/users/me/titles?categories=ps4_game,ps5_native_game&limit=250&offset=0");
+        //        requestMessage5.Headers.Authorization = new AuthenticationHeaderValue("Bearer", tokens.access_token);
+        //        var resp5 = await httpClient.SendAsync(requestMessage5);
+        //        var strResponse5 = await resp5.Content.ReadAsStringAsync();
+
+        //    }
+
+        //}
 
         private IEnumerable<Playnite.SDK.HttpCookie> dumpCookies()
         {
             var view = api.WebViews.CreateView(1000, 800);
- 
-            var cookies = view.GetCookies()?.Where(x => x.Domain == ".playstation.com");
+
+            var cookies = view.GetCookies(); //?.Where(x => x.Domain == ".playstation.com");
 
 
             var cookieContainer = new CookieContainer();
             foreach (var cookie in cookies)
             {
                 if (cookie.Domain == ".playstation.com")
+                {
                     cookieContainer.Add(new Uri("https://web.np.playstation.com"), new Cookie(cookie.Name, cookie.Value));
+                }
+                if (cookie.Domain == "ca.account.sony.com")                {
+
+                    cookieContainer.Add(new Uri("https://ca.account.sony.com"), new Cookie(cookie.Name, cookie.Value));
+                }
+                if (cookie.Domain == ".sony.com")
+                {
+                    cookieContainer.Add(new Uri("https://ca.account.sony.com"), new Cookie(cookie.Name, cookie.Value));
+                }
             }
 
             WriteCookiesToDisk(cookieContainer);
@@ -140,6 +208,29 @@ namespace PSNLibrary.Services
             }
         }
 
+        private async Task getMobileToken()
+        {
+            var cookieContainer = ReadCookiesFromDisk();
+            using (var handler = new HttpClientHandler() { CookieContainer = cookieContainer })
+            using (var httpClient = new HttpClient(handler))
+            {
+                var mobileCodeResponse = await httpClient.GetAsync(mobileCodeUrl);
+                var mobileCode = HttpUtility.ParseQueryString(mobileCodeResponse.Headers.Location.Query)["code"];
+
+                HttpRequestMessage requestMessage = new HttpRequestMessage(new HttpMethod("post"), mobileTokenUrl);
+                var requestMessageForm = new List<KeyValuePair<string, string>>();
+                requestMessageForm.Add(new KeyValuePair<string, string>("code", mobileCode));
+                requestMessageForm.Add(new KeyValuePair<string, string>("redirect_uri", "com.playstation.PlayStationApp://redirect"));
+                requestMessageForm.Add(new KeyValuePair<string, string>("grant_type", "authorization_code"));
+                requestMessageForm.Add(new KeyValuePair<string, string>("token_format", "jwt"));
+                requestMessage.Content = new FormUrlEncodedContent(requestMessageForm);
+                requestMessage.Headers.Authorization = new AuthenticationHeaderValue("Basic", mobileTokenAuth);
+
+                var mobileTokenResponse = await httpClient.SendAsync(requestMessage);
+                var strResponse = await mobileTokenResponse.Content.ReadAsStringAsync();
+                mobileToken = Serialization.FromJson<MobileTokens>(strResponse);
+            }
+        }
 
         private async Task CheckAuthentication()
         {
@@ -152,6 +243,13 @@ namespace PSNLibrary.Services
                 if (!await GetIsUserLoggedIn())
                 {
                     throw new Exception("User is not authenticated.");
+                }
+                else
+                {
+                    if (mobileToken == null)
+                    {
+                        await getMobileToken();
+                    }
                 }
             }
         }
@@ -296,6 +394,40 @@ namespace PSNLibrary.Services
 
 
             }    
+
+            return titles;
+        }
+
+        public async Task<List<PlayedTitlesMobile.PlayedTitleMobile>> GetPlayedTitlesMobile()
+        {
+            await CheckAuthentication();
+
+            var titles = new List<PlayedTitlesMobile.PlayedTitleMobile>();
+
+            var cookieContainer = ReadCookiesFromDisk();
+            using (var handler = new HttpClientHandler() { CookieContainer = cookieContainer })
+            using (var httpClient = new HttpClient(handler))
+            {
+                //HttpRequestMessage requestMessage = new HttpRequestMessage(new HttpMethod("get"), playedMobileListUrl.Format(offset));
+                //requestMessage.Headers.Authorization = new AuthenticationHeaderValue("Bearer", mobileToken.access_token);
+                //var resp = await httpClient.SendAsync(requestMessage);
+                //var strResponse = await resp.Content.ReadAsStringAsync();
+
+                int? offset = 0;
+
+                do
+                {
+                    HttpRequestMessage requestMessage = new HttpRequestMessage(new HttpMethod("get"), playedMobileListUrl.Format(offset));
+                    requestMessage.Headers.Authorization = new AuthenticationHeaderValue("Bearer", mobileToken.access_token);
+                    var resp = await httpClient.SendAsync(requestMessage);
+                    var strResponse = await resp.Content.ReadAsStringAsync();
+                    var titles_part = Serialization.FromJson<PlayedTitlesMobile>(strResponse);
+                    titles.AddRange(titles_part.titles);
+                    offset = titles_part.nextOffset;
+                } while (offset != null);
+
+
+            }
 
             return titles;
         }

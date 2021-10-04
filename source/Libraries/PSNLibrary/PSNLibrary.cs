@@ -63,6 +63,26 @@ namespace PSNLibrary
             return platform;
         }
 
+        private string ParseCategory(string category)
+        {
+            string platform = null;
+
+            switch (category)
+            {
+                case "ps4_game":
+                    platform = "sony_playstation4";
+                    break;
+
+                case "ps5_native_game":
+                    platform = "sony_playstation5";
+                    break;
+
+                default:
+                    break;
+            }
+            return platform;
+        }
+
         private string FixGameName(string name)
         {
             var gameName = name.
@@ -116,6 +136,28 @@ namespace PSNLibrary
             return parsedGames;
         }
 
+        // TODO: Figure out smarter way to share code without overloading
+        private List<GameMetadata> parseGames(List<PlayedTitlesMobile.PlayedTitleMobile> gamesToParse)
+        {
+            var parsedGames = new List<GameMetadata>();
+            foreach (var title in gamesToParse)
+            {
+                var gameName = FixGameName(title.name);
+
+                string platform = ParseCategory(title.category);
+
+                parsedGames.Add(new GameMetadata
+                {
+                    GameId = title.titleId,
+                    Name = gameName,
+                    CoverImage = SettingsViewModel.Settings.DownloadImageMetadata ? new MetadataFile(title.imageUrl) : null,
+                    Platforms = new HashSet<MetadataProperty> { new MetadataSpecProperty(platform) }
+                });
+            }
+
+            return parsedGames;
+        }
+
         private List<GameMetadata> ParseAccountList(PSNAccountClient clientApi)
         {
             var gamesToParse = clientApi.GetAccountTitles().GetAwaiter().GetResult();
@@ -127,6 +169,12 @@ namespace PSNLibrary
             var gamesToParse = clientApi.GetPlayedTitles().GetAwaiter().GetResult();            
             return parseGames(gamesToParse);
         }
+
+        private List<GameMetadata> ParsePlayedMobileList(PSNAccountClient clientApi)
+        {
+            var gamesToParse = clientApi.GetPlayedTitlesMobile().GetAwaiter().GetResult();
+            return parseGames(gamesToParse);
+        }        
 
         //private List<GameMetadata> ParseThrophies(PSNAccountClient clientApi)
         //{
@@ -248,8 +296,10 @@ namespace PSNLibrary
             {
                 var clientApi = new PSNAccountClient(this, PlayniteApi);
                 var allGames = new List<GameMetadata>();
-                allGames.AddRange(ParseAccountList(clientApi));
+                allGames.AddRange(ParsePlayedMobileList(clientApi));
                 allGames.AddRange(ParsePlayedList(clientApi));
+                allGames.AddRange(ParseAccountList(clientApi));
+                
                 //allGames.AddRange(ParseThrophies(clientApi));
 
                 // This need to happen to merge games from different APIs
