@@ -1,8 +1,14 @@
 AddonId: PlayStationLibrary_Builtin
 Packages:
+  - Version: 2.6
+    RequiredApiVersion: 6.0.0
+    ReleaseDate: 2021-10-05
+    PackageUrl: https://github.com/XenorPLxx/playnite-library-psn/releases/download/2.6/PlayStationLibrary_Builtin_2_6.pext
+    Changelog:
+      - Added playtime and last activity tracking
   - Version: 2.5
     RequiredApiVersion: 6.0.0
-    ReleaseDate: 2021-10-04
+    ReleaseDate: 2021-10-05
     PackageUrl: https://github.com/XenorPLxx/playnite-library-psn/releases/download/2.5/PlayStationLibrary_Builtin_2_5.pext
     Changelog:
       - Further improved authentication handling for mobile APIs

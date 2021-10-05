@@ -339,7 +339,10 @@ namespace PSNLibrary
                         {
                             alreadyImported.Playtime = group.FirstOrDefault(a => a.LastActivity != null)?.Playtime ?? alreadyImported.Playtime;
                         }
-                        if (SettingsViewModel.Settings.LastPlayed || SettingsViewModel.Settings.Playtime) { PlayniteApi.Database.Games.Update(alreadyImported); }
+                        if (SettingsViewModel.Settings.LastPlayed || SettingsViewModel.Settings.Playtime) 
+                        { 
+                            PlayniteApi.Database.Games.Update(alreadyImported);
+                        }
                     }
                 }
             }
