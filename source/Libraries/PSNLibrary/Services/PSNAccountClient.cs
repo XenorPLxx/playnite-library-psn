@@ -204,7 +204,11 @@ namespace PSNLibrary.Services
             {
                 if (!await GetIsUserLoggedIn())
                 {
-                    throw new Exception("User is not authenticated.");
+                    TryRefreshCookies();
+                    if (!await GetIsUserLoggedIn())
+                    {
+                        throw new Exception("User is not authenticated.");
+                    }
                 }
                 else
                 {
