@@ -269,9 +269,9 @@ namespace PSNLibrary
             {
                 var clientApi = new PSNAccountClient(this, PlayniteApi);
                 var allGames = new List<GameMetadata>();
+                allGames.AddRange(ParseAccountList(clientApi)); // AccountList has the best game names
                 allGames.AddRange(ParsePlayedMobileList(clientApi));
                 allGames.AddRange(ParsePlayedList(clientApi));
-                allGames.AddRange(ParseAccountList(clientApi));
 
                 // Migration is based on API that accepts titleId, that's why ParseThrophies is excluded
                 if (SettingsViewModel.Settings.Migration)
