@@ -1,5 +1,11 @@
 AddonId: PlayStationLibrary_Builtin
 Packages:
+  - Version: 2.7
+    RequiredApiVersion: 6.0.0
+    ReleaseDate: 2021-10-05
+    PackageUrl: https://github.com/XenorPLxx/playnite-library-psn/releases/download/2.7/PlayStationLibrary_Builtin_2_7.pext
+    Changelog:
+      - Improved authentication refresh handling
   - Version: 2.6
     RequiredApiVersion: 6.0.0
     ReleaseDate: 2021-10-05
