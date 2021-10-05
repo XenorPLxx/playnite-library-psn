@@ -129,7 +129,8 @@ namespace PSNLibrary
                     GameId = title.titleId,
                     Name = gameName,
                     CoverImage = SettingsViewModel.Settings.DownloadImageMetadata ? new MetadataFile(title.image.url) : null,
-                    Platforms = new HashSet<MetadataProperty> { new MetadataSpecProperty(platform) }
+                    Platforms = new HashSet<MetadataProperty> { new MetadataSpecProperty(platform) },
+                    LastActivity = title.lastPlayedDateTime
                 });
             }
 
@@ -146,12 +147,45 @@ namespace PSNLibrary
 
                 string platform = ParseCategory(title.category);
 
+                ulong playtime = 0;
+
+                foreach (Group group in Regex.Match(title.playDuration , "^PT(\\d+[A-Z])+$").Groups)
+                {
+                    foreach (Capture capture in group.Captures)
+                    {
+                        string type = capture.Value.Substring(capture.Value.Length - 1, 1);
+                        if (int.TryParse(capture.Value.Substring(0, capture.Value.Length - 1), out int number))
+                        {
+                            switch (type)
+                            {
+                                case "S":
+                                    playtime = playtime + (ulong)number;
+                                    break;
+
+                                case "M":
+                                    playtime = playtime + ((ulong)number * 60);
+                                    break;
+
+                                case "H":
+                                    playtime = playtime + ((ulong)number * 60 * 60);
+                                    break;
+
+                                default:
+                                    break;
+                            }
+                        }
+                    }
+                  
+                }
+
                 parsedGames.Add(new GameMetadata
                 {
                     GameId = title.titleId,
                     Name = gameName,
                     CoverImage = SettingsViewModel.Settings.DownloadImageMetadata ? new MetadataFile(title.imageUrl) : null,
-                    Platforms = new HashSet<MetadataProperty> { new MetadataSpecProperty(platform) }
+                    Platforms = new HashSet<MetadataProperty> { new MetadataSpecProperty(platform) },
+                    Playtime = playtime,
+                    LastActivity = title.lastPlayedDateTime
                 });
             }
 
@@ -295,6 +329,17 @@ namespace PSNLibrary
                     {
                         game.Source = new MetadataNameProperty("PlayStation");
                         importedGames.Add(PlayniteApi.Database.ImportGame(game, this));
+                    } else
+                    {
+                        if (SettingsViewModel.Settings.LastPlayed)
+                        {
+                            alreadyImported.LastActivity = group.FirstOrDefault(a => a.LastActivity != null)?.LastActivity;
+                        }
+                        if (SettingsViewModel.Settings.Playtime)
+                        {
+                            alreadyImported.Playtime = group.FirstOrDefault(a => a.LastActivity != null)?.Playtime ?? alreadyImported.Playtime;
+                        }
+                        if (SettingsViewModel.Settings.LastPlayed || SettingsViewModel.Settings.Playtime) { PlayniteApi.Database.Games.Update(alreadyImported); }
                     }
                 }
             }
