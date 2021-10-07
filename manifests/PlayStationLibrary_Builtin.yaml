@@ -1,5 +1,11 @@
 AddonId: PlayStationLibrary_Builtin
 Packages:
+  - Version: 2.8
+    RequiredApiVersion: 6.0.0
+    ReleaseDate: 2021-10-07
+    PackageUrl: https://github.com/XenorPLxx/playnite-library-psn/releases/download/2.8/PlayStationLibrary_Builtin_2_8.pext
+    Changelog:
+      - Fixed cookie removal for reauthentication
   - Version: 2.7
     RequiredApiVersion: 6.0.0
     ReleaseDate: 2021-10-05
