@@ -107,7 +107,7 @@ namespace PSNLibrary
                     GameId = title.titleId,
                     Name = gameName,
                     CoverImage = SettingsViewModel.Settings.DownloadImageMetadata ? new MetadataFile(title.image.url) : null,
-                    Platforms = new HashSet<MetadataProperty> { new MetadataSpecProperty(platform) }
+                    Platforms = platform.IsNullOrEmpty() ? null : new HashSet<MetadataProperty> { new MetadataSpecProperty(platform) }
                 });
             }
 
@@ -129,7 +129,7 @@ namespace PSNLibrary
                     GameId = title.titleId,
                     Name = gameName,
                     CoverImage = SettingsViewModel.Settings.DownloadImageMetadata ? new MetadataFile(title.image.url) : null,
-                    Platforms = new HashSet<MetadataProperty> { new MetadataSpecProperty(platform) },
+                    Platforms = platform.IsNullOrEmpty() ? null : new HashSet<MetadataProperty> { new MetadataSpecProperty(platform) },
                     LastActivity = title.lastPlayedDateTime
                 });
             }
@@ -140,7 +140,7 @@ namespace PSNLibrary
         // TODO: Figure out smarter way to share code without overloading
         private List<GameMetadata> parseGames(List<PlayedTitlesMobile.PlayedTitleMobile> gamesToParse)
         {
-            var parsedGames = new List<GameMetadata>();
+            var parsedGames = new List<GameMetadata>();        
             foreach (var title in gamesToParse)
             {
                 var gameName = FixGameName(title.name);
@@ -149,7 +149,7 @@ namespace PSNLibrary
 
                 ulong playtime = 0;
 
-                foreach (Group group in Regex.Match(title.playDuration , "^PT(\\d+[A-Z])+$").Groups)
+                foreach (Group group in Regex.Match(title.playDuration, "^PT(\\d+[A-Z])+$").Groups)
                 {
                     foreach (Capture capture in group.Captures)
                     {
@@ -175,7 +175,7 @@ namespace PSNLibrary
                             }
                         }
                     }
-                  
+
                 }
 
                 parsedGames.Add(new GameMetadata
@@ -183,11 +183,12 @@ namespace PSNLibrary
                     GameId = title.titleId,
                     Name = gameName,
                     CoverImage = SettingsViewModel.Settings.DownloadImageMetadata ? new MetadataFile(title.imageUrl) : null,
-                    Platforms = new HashSet<MetadataProperty> { new MetadataSpecProperty(platform) },
+                    Platforms = platform.IsNullOrEmpty() ? null : new HashSet<MetadataProperty> { new MetadataSpecProperty(platform) },
                     Playtime = playtime,
                     LastActivity = title.lastPlayedDateTime
                 });
             }
+            
 
             return parsedGames;
         }
