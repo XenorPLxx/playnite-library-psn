@@ -69,8 +69,9 @@ namespace PSNLibrary.Services
                 };
 
                 view.DeleteDomainCookies(".sony.com");
-                view.DeleteDomainCookies(".ca.account.sony.com");
+                view.DeleteDomainCookies("ca.account.sony.com");
                 view.DeleteDomainCookies(".playstation.com");
+                view.DeleteDomainCookies("io.playstation.com");
                 view.Navigate(loginUrl);
                 view.OpenDialog();
             }
