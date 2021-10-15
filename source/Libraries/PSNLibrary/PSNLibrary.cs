@@ -185,7 +185,8 @@ namespace PSNLibrary
                     CoverImage = SettingsViewModel.Settings.DownloadImageMetadata ? new MetadataFile(title.imageUrl) : null,
                     Platforms = platform.IsNullOrEmpty() ? null : new HashSet<MetadataProperty> { new MetadataSpecProperty(platform) },
                     Playtime = playtime,
-                    LastActivity = title.lastPlayedDateTime
+                    LastActivity = title.lastPlayedDateTime,
+                    PlayCount = title.playCount
                 });
             }
             
@@ -339,6 +340,7 @@ namespace PSNLibrary
                         if (SettingsViewModel.Settings.Playtime)
                         {
                             alreadyImported.Playtime = group.FirstOrDefault(a => a.LastActivity != null)?.Playtime ?? alreadyImported.Playtime;
+                            alreadyImported.PlayCount = group.FirstOrDefault(a => a.LastActivity != null)?.PlayCount ?? alreadyImported.PlayCount;
                         }
                         if (SettingsViewModel.Settings.LastPlayed || SettingsViewModel.Settings.Playtime) 
                         { 

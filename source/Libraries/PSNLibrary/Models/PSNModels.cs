@@ -111,6 +111,7 @@ namespace PSNLibrary.Models
             public string titleId { get; set; }
             public DateTime lastPlayedDateTime { get; set; }
             public string playDuration { get; set; }
+            public ulong playCount { get; set; }
 
             public override string ToString()
             {
