@@ -1,5 +1,11 @@
 AddonId: PlayStationLibrary_Builtin
 Packages:
+  - Version: 2.12
+    RequiredApiVersion: 6.0.0
+    ReleaseDate: 2021-11-09
+    PackageUrl: https://github.com/XenorPLxx/playnite-library-psn/releases/download/2.12/PlayStationLibrary_Builtin_2_12.pext
+    Changelog:
+      - Fixes error when last played datetime is null in API
   - Version: 2.11
     RequiredApiVersion: 6.0.0
     ReleaseDate: 2021-10-16
