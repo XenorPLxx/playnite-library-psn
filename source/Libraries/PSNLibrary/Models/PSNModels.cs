@@ -24,7 +24,7 @@ namespace PSNLibrary.Models
                 public string productId { get; set; }
                 public string subscriptionService { get; set; }
                 public string titleId { get; set; }
-                public DateTime lastPlayedDateTime { get; set; }
+                public DateTime? lastPlayedDateTime { get; set; }
                 public Image image { get; set; }
 
                 public override string ToString()
@@ -109,7 +109,7 @@ namespace PSNLibrary.Models
             public string name { get; set; }
             public string category { get; set; }
             public string titleId { get; set; }
-            public DateTime lastPlayedDateTime { get; set; }
+            public DateTime? lastPlayedDateTime { get; set; }
             public string playDuration { get; set; }
             public ulong playCount { get; set; }
 
