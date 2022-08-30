@@ -333,16 +333,32 @@ namespace PSNLibrary
                         importedGames.Add(PlayniteApi.Database.ImportGame(game, this));
                     } else
                     {
+                        bool changed = false;
                         if (SettingsViewModel.Settings.LastPlayed)
                         {
-                            alreadyImported.LastActivity = group.FirstOrDefault(a => a.LastActivity != null)?.LastActivity;
+                            var newLastActivity = group.FirstOrDefault(a => a.LastActivity != null)?.LastActivity;
+                            if (newLastActivity != null && (alreadyImported.LastActivity == null || newLastActivity.Value.ToUniversalTime() != alreadyImported.LastActivity.Value.ToUniversalTime())) {
+                                alreadyImported.LastActivity = newLastActivity;
+                                changed = true;
+                            }
                         }
                         if (SettingsViewModel.Settings.Playtime)
                         {
-                            alreadyImported.Playtime = group.FirstOrDefault(a => a.LastActivity != null)?.Playtime ?? alreadyImported.Playtime;
-                            alreadyImported.PlayCount = group.FirstOrDefault(a => a.LastActivity != null)?.PlayCount ?? alreadyImported.PlayCount;
+                            var newPlaytime = group.FirstOrDefault(a => a.LastActivity != null)?.Playtime ?? alreadyImported.Playtime;
+                            if (newPlaytime != alreadyImported.Playtime)
+                            {
+                                alreadyImported.Playtime = newPlaytime;
+                                changed = true;
+                            }
+
+                            var newPlayCount = group.FirstOrDefault(a => a.LastActivity != null)?.PlayCount ?? alreadyImported.PlayCount;
+                            if (newPlayCount != alreadyImported.PlayCount)
+                            {
+                                alreadyImported.PlayCount = newPlayCount;
+                                changed = true;
+                            }
                         }
-                        if (SettingsViewModel.Settings.LastPlayed || SettingsViewModel.Settings.Playtime) 
+                        if ((SettingsViewModel.Settings.LastPlayed || SettingsViewModel.Settings.Playtime) && changed)
                         { 
                             PlayniteApi.Database.Games.Update(alreadyImported);
                         }

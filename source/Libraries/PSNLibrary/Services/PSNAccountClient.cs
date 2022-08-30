@@ -198,8 +198,8 @@ namespace PSNLibrary.Services
         public async Task CheckAuthentication()
         {
             if (!File.Exists(tokenPath))
-            {
-                throw new Exception("User is not authenticated.");
+            {                
+                throw new Exception("User is not authenticated: token file doesn't exist.");
             }
             else
             {
