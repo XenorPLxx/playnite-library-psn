@@ -1,7 +1,7 @@
 ﻿Id: PlayStationLibrary_Builtin
 Name: PlayStation library integration
 Author: Xenor
-Version: 2.13
+Version: 2.14
 Module: PSNLibrary.dll
 Type: GameLibrary
 Icon: icon.png
