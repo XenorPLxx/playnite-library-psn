@@ -60,6 +60,19 @@
                     </TextBlock.Style>
                 </TextBlock>
             </StackPanel>
+            <TextBlock TextWrapping="Wrap" Margin="0,8,0,0">
+                <TextBlock.Text>
+                    WARNING: If you encounter an error stating "A connection to the server could not be established. (18.315a1602.1667837113.908b574)", try pressing "Trouble with login?", then press the arrow button to go back to the login page. It might take a few tries.
+                </TextBlock.Text>
+            </TextBlock>
+            <TextBlock TextWrapping="Wrap" Margin="0,8,0,0">
+                More information about the issue:
+                <Hyperlink
+                    NavigateUri="https://github.com/XenorPLxx/playnite-library-psn/issues/5#issuecomment-1305829051"
+                    RequestNavigate="Hyperlink_RequestNavigate">
+                    https://github.com/XenorPLxx/playnite-library-psn/issues/5
+                </Hyperlink>                
+            </TextBlock>
         </StackPanel>
 
         <StackPanel Margin="0,16,0,0">
