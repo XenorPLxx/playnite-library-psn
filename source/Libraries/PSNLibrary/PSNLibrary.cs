@@ -226,6 +226,7 @@ namespace PSNLibrary
                 var newGame = new GameMetadata
                 {
                     GameId = title.npCommunicationId,
+                    LastActivity = title.lastUpdatedDateTime,
                     Name = gameName
                 };
 

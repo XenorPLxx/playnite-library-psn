@@ -132,6 +132,7 @@ namespace PSNLibrary.Models
         public string trophyTitleName { get; set; }
         public string trophyTitlePlatform { get; set; }
         public string npCommunicationId { get; set; }
+        public DateTime? lastUpdatedDateTime { get; set; }
 
         public override string ToString()
         {
