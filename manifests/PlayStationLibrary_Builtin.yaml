@@ -1,5 +1,11 @@
 AddonId: PlayStationLibrary_Builtin
 Packages:
+  - Version: 2.16
+    RequiredApiVersion: 6.0.0
+    ReleaseDate: 2022-11-14
+    PackageUrl: https://github.com/XenorPLxx/playnite-library-psn/releases/download/2.16/PlayStationLibrary_Builtin_2_16.pext
+    Changelog:
+      - Adds last activity date for legacy games
   - Version: 2.15
     RequiredApiVersion: 6.0.0
     ReleaseDate: 2022-11-07
