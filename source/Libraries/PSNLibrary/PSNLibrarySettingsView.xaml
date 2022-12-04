@@ -25,14 +25,14 @@
                 </TextBlock.Text>
             </TextBlock>
             <TextBlock TextWrapping="Wrap" Margin="0,8,0,0">
-                <Run Text="1. Authenticate at "/>
+                <Run Text="1. Authenticate at"/>
                 <Hyperlink
                     NavigateUri="https://www.playstation.com/"
                     RequestNavigate="Hyperlink_RequestNavigate">
                     https://www.playstation.com/
                 </Hyperlink>
                 <LineBreak/>
-                <Run Text="2. Go to "/>
+                <Run Text="2. Go to"/>
                 <Hyperlink
                     NavigateUri="https://ca.account.sony.com/api/v1/ssocookie"
                     RequestNavigate="Hyperlink_RequestNavigate">
