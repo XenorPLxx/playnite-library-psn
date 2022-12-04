@@ -16,26 +16,39 @@
                Text="PSN integration is currently broken and not supported." />-->
 
     <StackPanel Margin="20">
-        <CheckBox Name="CheckPSNConnectAccount"
-                  IsChecked="{Binding Settings.ConnectAccount}"
-                  Content="{DynamicResource LOCSettingsConnectAccount}"/>
-
-        <CheckBox Name="CheckPSNDownloadImageMetadata"
-                  IsChecked="{Binding Settings.DownloadImageMetadata}"
-                  Content="{DynamicResource LOCSettingsDonwloadImageMetadata}"
-                  Margin="0,4,0,0"/>
-
-        <CheckBox Name="CheckPSNMigration"
-                  IsChecked="{Binding Settings.Migration}"
-                  Content="{DynamicResource LOCSettingsMigration}"
-                  Margin="0,4,0,0"/>
-
-        <StackPanel DockPanel.Dock="Top" Margin="40,5,0,0"
+        <StackPanel DockPanel.Dock="Top" Margin="0,0,0,16"
                     IsEnabled="{Binding IsChecked, ElementName=CheckPSNConnectAccount}">
 
+            <TextBlock TextWrapping="Wrap" Margin="0,0,0,0" FontSize="16">
+                <TextBlock.Text>
+                    Authentication
+                </TextBlock.Text>
+            </TextBlock>
+            <TextBlock TextWrapping="Wrap" Margin="0,8,0,0">
+                <Run Text="1. Authenticate at "/>
+                <Hyperlink
+                    NavigateUri="https://www.playstation.com/"
+                    RequestNavigate="Hyperlink_RequestNavigate">
+                    https://www.playstation.com/
+                </Hyperlink>
+                <LineBreak/>
+                <Run Text="2. Go to "/>
+                <Hyperlink
+                    NavigateUri="https://ca.account.sony.com/api/v1/ssocookie"
+                    RequestNavigate="Hyperlink_RequestNavigate">
+                    https://ca.account.sony.com/api/v1/ssocookie
+                </Hyperlink>
+                <LineBreak/>
+                <Run Text="3. You'll see `{&quot;npsso&quot;:&quot;xxx&quot;}`. Copy the 'xxx' part to the text box below."/>
+                <LineBreak/>
+                <Run Text="4. Click 'Check authentication'."/>
+            </TextBlock>
+            
+            <Label Content="Paste NPSSO value here:" Margin="0,8,0,4"/>
+            <TextBox Name="Npsso" Text="{Binding Settings.Npsso}"></TextBox>
             <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
-                <Button Content="{DynamicResource LOCAuthenticateLabel}" HorizontalAlignment="Left"                         
-                        Command="{Binding LoginCommand}" Margin="0,5,5,5"/>
+                <Button Content="Check Authentication" HorizontalAlignment="Left"                         
+                        Command="{Binding CheckAuthenticationCommand}" Margin="0,0,0,0"/>
                 <TextBlock VerticalAlignment="Center" Margin="10,5,5,5">
                     <TextBlock.Tag>
                         <PriorityBinding>
@@ -60,46 +73,80 @@
                     </TextBlock.Style>
                 </TextBlock>
             </StackPanel>
-            <TextBlock TextWrapping="Wrap" Margin="0,8,0,0">
+
+            
+        </StackPanel>
+
+
+        <StackPanel DockPanel.Dock="Top" Margin="0,0,0,16">
+            <TextBlock TextWrapping="Wrap" Margin="0,0,0,8" FontSize="16">
                 <TextBlock.Text>
-                    WARNING: If you encounter an error stating "A connection to the server could not be established. (18.315a1602.1667837113.908b574)", try pressing "Trouble with login?", then press the arrow button to go back to the login page. It might take a few tries.
+                    Settings
                 </TextBlock.Text>
             </TextBlock>
-            <TextBlock TextWrapping="Wrap" Margin="0,8,0,0">
-                More information about the issue:
+
+            <CheckBox Name="CheckPSNConnectAccount"
+                      IsChecked="{Binding Settings.ConnectAccount}"
+                      Content="{DynamicResource LOCSettingsConnectAccount}"/>
+
+            <CheckBox Name="CheckPSNDownloadImageMetadata"
+                      IsChecked="{Binding Settings.DownloadImageMetadata}"
+                      Content="{DynamicResource LOCSettingsDonwloadImageMetadata}"
+                      Margin="0,4,0,0"/>
+
+            <CheckBox Name="CheckPSNMigration"
+                      IsChecked="{Binding Settings.Migration}"
+                      Content="{DynamicResource LOCSettingsMigration}"
+                      Margin="0,4,0,0"/> 
+
+            <StackPanel Margin="0,16,0,0">
+                <CheckBox Name="CheckUpdateLastPlayed"
+                      IsChecked="{Binding Settings.LastPlayed}"
+                      Content="{DynamicResource LOCSettingsUpdateLastPlayed}"
+                      Margin="0,4,0,0"/>
+                <CheckBox Name="CheckUpdatePlaytime"
+                          IsChecked="{Binding Settings.Playtime}"
+                          Content="{DynamicResource LOCSettingsUpdatePlaytime}"
+                      Margin="0,4,0,0"/>
+            </StackPanel>
+
+            <StackPanel Margin="0,20,0,0">
+                <Label Content="{DynamicResource LOCSettingsLegacyGames}"></Label>
+                <CheckBox Name="CheckPSNDownloadPS3"
+                      IsChecked="{Binding Settings.PS3}"
+                      Content="{DynamicResource LOCSettingsDownloadPS3}"
+                      Margin="0,4,0,0"/>
+                <CheckBox Name="CheckPSNDownloadPSP"
+                          IsChecked="{Binding Settings.PSP}"
+                          Content="{DynamicResource LOCSettingsDownloadPSP}"
+                      Margin="0,4,0,0"/>
+                <CheckBox Name="CheckPSNDownloadPSVITA"
+                          IsChecked="{Binding Settings.PSVITA}"
+                          Content="{DynamicResource LOCSettingsDownloadPSVITA}"
+                      Margin="0,4,0,0"/>
+            </StackPanel>
+        </StackPanel>
+
+        <StackPanel DockPanel.Dock="Top" Margin="0,0,0,16">
+            <TextBlock TextWrapping="Wrap" Margin="0,0,0,0" FontSize="16">
+            <TextBlock.Text>
+                Legacy authentication method
+            </TextBlock.Text>
+        </TextBlock>
+        <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+            <Button Content="{DynamicResource LOCAuthenticateLabel}" HorizontalAlignment="Left"                         
+                        Command="{Binding LoginCommand}" Margin="0,0,0,0"/>
+        </StackPanel>
+        <TextBlock TextWrapping="Wrap" Margin="0,8,0,0">
+                    WARNING: If you encounter an error stating "A connection to the server could not be established.", try checking 
                 <Hyperlink
                     NavigateUri="https://github.com/XenorPLxx/playnite-library-psn/issues/5#issuecomment-1305829051"
                     RequestNavigate="Hyperlink_RequestNavigate">
-                    https://github.com/XenorPLxx/playnite-library-psn/issues/5
-                </Hyperlink>                
+                    discussion about the issue
+                </Hyperlink>
+
             </TextBlock>
         </StackPanel>
-
-        <StackPanel Margin="0,16,0,0">
-            <CheckBox Name="CheckUpdateLastPlayed"
-                  IsChecked="{Binding Settings.LastPlayed}"
-                  Content="{DynamicResource LOCSettingsUpdateLastPlayed}"
-                  Margin="0,4,0,0"/>
-            <CheckBox Name="CheckUpdatePlaytime"
-                      IsChecked="{Binding Settings.Playtime}"
-                      Content="{DynamicResource LOCSettingsUpdatePlaytime}"
-                  Margin="0,4,0,0"/>
-        </StackPanel>
-
-        <StackPanel Margin="0,20,0,0">
-            <Label Content="{DynamicResource LOCSettingsLegacyGames}"></Label>
-            <CheckBox Name="CheckPSNDownloadPS3"
-                  IsChecked="{Binding Settings.PS3}"
-                  Content="{DynamicResource LOCSettingsDownloadPS3}"
-                  Margin="0,4,0,0"/>
-            <CheckBox Name="CheckPSNDownloadPSP"
-                      IsChecked="{Binding Settings.PSP}"
-                      Content="{DynamicResource LOCSettingsDownloadPSP}"
-                  Margin="0,4,0,0"/>
-            <CheckBox Name="CheckPSNDownloadPSVITA"
-                      IsChecked="{Binding Settings.PSVITA}"
-                      Content="{DynamicResource LOCSettingsDownloadPSVITA}"
-                  Margin="0,4,0,0"/>
-        </StackPanel>        
     </StackPanel>
+
 </UserControl>

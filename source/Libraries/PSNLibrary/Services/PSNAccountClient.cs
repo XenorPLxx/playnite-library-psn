@@ -100,8 +100,8 @@ namespace PSNLibrary.Services
                 {
                     cookieContainer.Add(new Uri("https://web.np.playstation.com"), new Cookie(cookie.Name, cookie.Value));
                 }
-                if (cookie.Domain == "ca.account.sony.com")                {
-
+                if (cookie.Domain == ".ca.account.sony.com")
+                {
                     cookieContainer.Add(new Uri("https://ca.account.sony.com"), new Cookie(cookie.Name, cookie.Value));
                 }
                 if (cookie.Domain == ".sony.com")
@@ -197,8 +197,9 @@ namespace PSNLibrary.Services
 
         public async Task CheckAuthentication()
         {
-            if (!File.Exists(tokenPath))
-            {                
+            string npsso = library.SettingsViewModel.Settings.Npsso;
+            if (!File.Exists(tokenPath) && npsso == null)
+            {
                 throw new Exception("User is not authenticated: token file doesn't exist.");
             }
             else
@@ -209,6 +210,16 @@ namespace PSNLibrary.Services
                     if (!await GetIsUserLoggedIn())
                     {
                         throw new Exception("User is not authenticated.");
+                    }
+                    else
+                    {
+                        if (mobileToken == null)
+                        {
+                            if (!await getMobileToken())
+                            {
+                                throw new Exception("User is not authenticated.");
+                            }
+                        }
                     }
                 }
                 else
@@ -370,6 +381,13 @@ namespace PSNLibrary.Services
                     webView.Close();
                 };
 
+                string npsso = library.SettingsViewModel.Settings.Npsso;
+                Playnite.SDK.HttpCookie npssoCookie = new Playnite.SDK.HttpCookie();
+                npssoCookie.Domain = "ca.account.sony.com";
+                npssoCookie.Value = npsso;
+                npssoCookie.Name = "npsso";
+                npssoCookie.Path = "/";
+                webView.SetCookies("https://ca.account.sony.com", npssoCookie);
                 webView.NavigateAndWait(loginUrl);
             }
 
@@ -378,7 +396,8 @@ namespace PSNLibrary.Services
 
         public async Task<bool> GetIsUserLoggedIn()
         {
-            if (!File.Exists(tokenPath))
+            string npsso = library.SettingsViewModel.Settings.Npsso;
+            if (!File.Exists(tokenPath) && npsso == null)
             {
                 return false;
             }
