@@ -1,5 +1,11 @@
 AddonId: PlayStationLibrary_Builtin
 Packages:
+  - Version: 2.17
+    RequiredApiVersion: 6.0.0
+    ReleaseDate: 2022-12-04
+    PackageUrl: https://github.com/XenorPLxx/playnite-library-psn/releases/download/2.17/PlayStationLibrary_Builtin_2_17.pext
+    Changelog:
+      - Changes authentication method
   - Version: 2.16
     RequiredApiVersion: 6.0.0
     ReleaseDate: 2022-11-14
