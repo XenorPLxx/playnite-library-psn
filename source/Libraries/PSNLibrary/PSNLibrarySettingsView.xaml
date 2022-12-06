@@ -29,15 +29,17 @@
                 <Hyperlink
                     NavigateUri="https://www.playstation.com/"
                     RequestNavigate="Hyperlink_RequestNavigate">
-                    https://www.playstation.com/
-                </Hyperlink>
+                    https://www.playstation.com
+                </Hyperlink><!--
+                --><Run Text=". Make sure to click 'Trust this Browser'."/>
                 <LineBreak/>
                 <Run Text="2. Go to"/>
                 <Hyperlink
                     NavigateUri="https://ca.account.sony.com/api/v1/ssocookie"
                     RequestNavigate="Hyperlink_RequestNavigate">
                     https://ca.account.sony.com/api/v1/ssocookie
-                </Hyperlink>
+                </Hyperlink><!--
+                --><Run Text="."/>
                 <LineBreak/>
                 <Run Text="3. You'll see `{&quot;npsso&quot;:&quot;xxx&quot;}`. Copy the 'xxx' part to the text box below."/>
                 <LineBreak/>
