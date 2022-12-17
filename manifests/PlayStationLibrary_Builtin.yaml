@@ -1,5 +1,11 @@
 AddonId: PlayStationLibrary_Builtin
 Packages:
+  - Version: 2.20
+    RequiredApiVersion: 6.8.0
+    ReleaseDate: 2022-12-17
+    PackageUrl: https://github.com/XenorPLxx/playnite-library-psn/releases/download/2.20/PlayStationLibrary_Builtin_2_20.pext
+    Changelog:
+      - Clears out old authentication on 'Check Authentication' button press
   - Version: 2.19
     RequiredApiVersion: 6.8.0
     ReleaseDate: 2022-12-16
