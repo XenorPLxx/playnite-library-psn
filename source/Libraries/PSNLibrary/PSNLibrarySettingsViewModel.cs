@@ -10,7 +10,7 @@ using System.Windows.Navigation;
 
 namespace PSNLibrary
 {
-    public class PSNLibrarySettings
+    public class PSNLibrarySettings : ObservableObject
     {
         public bool ConnectAccount { get; set; } = true;
         public bool DownloadImageMetadata { get; set; } = true;
@@ -20,7 +20,9 @@ namespace PSNLibrary
         public bool PSP { get; set; } = true;
         public bool PSVITA { get; set; } = true;
         public bool Migration { get; set; } = true;
-        public string Npsso { get; set; } = null;
+
+        private string npsso = null;
+        public string Npsso { get => npsso; set => SetValue(ref npsso, value); }
     }
 
     public class PSNLibrarySettingsViewModel : PluginSettingsViewModel<PSNLibrarySettings, PSNLibrary>
@@ -75,6 +77,7 @@ namespace PSNLibrary
 
         private void Login()
         {
+            Settings.Npsso = null;
             try
             {
                 clientApi.Login();
@@ -87,6 +90,7 @@ namespace PSNLibrary
         }
         private void CheckAuthentication()
         {
+            clientApi.ClearAuthentication();
             OnPropertyChanged(nameof(IsUserLoggedIn));
         }
     }

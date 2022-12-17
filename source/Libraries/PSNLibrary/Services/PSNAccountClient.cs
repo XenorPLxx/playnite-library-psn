@@ -55,6 +55,11 @@ namespace PSNLibrary.Services
         {
             var loggedIn = false;
 
+            if (File.Exists(tokenPath))
+            {
+                File.Delete(tokenPath);
+            }
+
             var webViewSettings = new WebViewSettings();
             webViewSettings.WindowHeight = 700;
             webViewSettings.WindowWidth = 580;
@@ -200,6 +205,25 @@ namespace PSNLibrary.Services
                 var strResponse = await mobileTokenResponse.Content.ReadAsStringAsync();
                 mobileToken = Serialization.FromJson<MobileTokens>(strResponse);
                 return true;
+            }
+        }
+
+
+        public void ClearAuthentication()
+        {
+            if (File.Exists(tokenPath))
+            {
+                File.Delete(tokenPath);
+            }
+
+            using (var view = api.WebViews.CreateOffscreenView())
+            {
+                view.DeleteDomainCookies(".sony.com");
+                view.DeleteDomainCookies(".ca.account.sony.com");
+                view.DeleteDomainCookies("ca.account.sony.com");
+                view.DeleteDomainCookies(".playstation.com");
+                view.DeleteDomainCookies("io.playstation.com");
+                view.Close();
             }
         }
 
