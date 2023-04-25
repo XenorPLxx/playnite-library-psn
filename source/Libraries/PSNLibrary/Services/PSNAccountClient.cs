@@ -40,7 +40,7 @@ namespace PSNLibrary.Services
         private const string mobileCodeUrl = "https://ca.account.sony.com/api/authz/v3/oauth/authorize?access_type=offline&client_id=09515159-7237-4370-9b40-3806e67c0891&redirect_uri=com.scee.psxandroid.scecompcall%3A%2F%2Fredirect&response_type=code&scope=psn%3Amobile.v2.core%20psn%3Aclientapp";
         private const string mobileTokenUrl = "https://ca.account.sony.com/api/authz/v3/oauth/token";
         private const string mobileTokenAuth = "MDk1MTUxNTktNzIzNy00MzcwLTliNDAtMzgwNmU2N2MwODkxOnVjUGprYTV0bnRCMktxc1A=";
-        private const string playedMobileListUrl = "https://m.np.playstation.com/api/gamelist/v2/users/me/titles?categories=ps4_game,ps5_native_game&limit=250&offset={0}";
+        private const string playedMobileListUrl = "https://m.np.playstation.com/api/gamelist/v2/users/me/titles?categories=ps4_game,ps5_native_game&limit=200&offset={0}";
         private const string trophiesMobileUrl = @"https://m.np.playstation.com/api/trophy/v1/users/me/trophyTitles?limit=250&offset={0}";
         private const string trophiesWithIdsMobileUrl = @"https://m.np.playstation.com/api/trophy/v1/users/me/titles/trophyTitles?npTitleIds={0}";
 
