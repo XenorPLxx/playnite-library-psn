@@ -13,12 +13,15 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Controls;
+using static PSNLibrary.Models.AccountTitlesErrorResponse;
 
 namespace PSNLibrary
 {
     [LoadPlugin]
     public class PSNLibrary : LibraryPluginBase<PSNLibrarySettingsViewModel>
     {
+        private readonly INotificationsAPI notifications;
+        private static readonly ILogger logger = LogManager.GetLogger();
         public PSNLibrary(IPlayniteAPI api) : base(
             "PlayStation",
             Guid.Parse("e4ac81cb-1b1a-4ec9-8639-9a9633989a71"),
@@ -29,6 +32,7 @@ namespace PSNLibrary
             api)
         {
             SettingsViewModel = new PSNLibrarySettingsViewModel(this, api);
+            notifications = api.Notifications;
         }
 
         private string ParsePlatform(string platformId)
@@ -196,26 +200,66 @@ namespace PSNLibrary
 
         private List<GameMetadata> ParseAccountList(PSNAccountClient clientApi)
         {
-            var gamesToParse = clientApi.GetAccountTitles().GetAwaiter().GetResult();
-            return parseGames(gamesToParse);
+            try
+            {
+                var gamesToParse = clientApi.GetAccountTitles().GetAwaiter().GetResult();
+                return parseGames(gamesToParse);
+            }
+            catch (Exception e)
+            {
+                logger.Error(e, "PSN_ParseAccountList");
+                notifications.Add(new NotificationMessage("PSN_ParseAccountList", "PSN: Account games list couldn't be parsed.", NotificationType.Error));
+                return new List<GameMetadata>();
+            }
         }
         
         private List<GameMetadata> ParsePlayedList(PSNAccountClient clientApi)
         {
-            var gamesToParse = clientApi.GetPlayedTitles().GetAwaiter().GetResult();            
-            return parseGames(gamesToParse);
+            try
+            {
+                var gamesToParse = clientApi.GetPlayedTitles().GetAwaiter().GetResult();
+                return parseGames(gamesToParse);
+            }
+            catch (Exception e)
+            {
+                logger.Error(e, "PSN_ParsePlayedList");
+                notifications.Add(new NotificationMessage("PSN_ParsePlayedList", "PSN: Played games list couldn't be parsed.", NotificationType.Error));
+                return new List<GameMetadata>();
+            }
         }
 
         private List<GameMetadata> ParsePlayedMobileList(PSNAccountClient clientApi)
         {
-            var gamesToParse = clientApi.GetPlayedTitlesMobile().GetAwaiter().GetResult();
-            return parseGames(gamesToParse);
+            try
+            {
+                var gamesToParse = clientApi.GetPlayedTitlesMobile().GetAwaiter().GetResult();
+                return parseGames(gamesToParse);
+            }
+            catch (Exception e)
+            {
+                logger.Error(e, "PSN_ParsePlayedMobileList");
+                notifications.Add(new NotificationMessage("PSN_ParsePlayedMobileList", "PSN: Mobile played games list couldn't be parsed.", NotificationType.Error));
+                return new List<GameMetadata>();
+            }
         }
 
         private List<GameMetadata> ParseThrophies(PSNAccountClient clientApi)
         {
             var parsedGames = new List<GameMetadata>();
-            foreach (var title in clientApi.GetTrohpiesMobile().GetAwaiter().GetResult())
+            var titles = new List<TrophyTitleMobile>();
+
+            try
+            {
+                titles = clientApi.GetTrohpiesMobile().GetAwaiter().GetResult();
+            }
+            catch (Exception e)
+            {
+                logger.Error(e, "PSN_ParseThrophies");
+                notifications.Add(new NotificationMessage("PSN_ParseThrophies", "PSN: Trophy list couldn't be parsed.", NotificationType.Error));
+                return parsedGames;
+            }
+
+            foreach (var title in titles)
             {
                 var gameName = FixGameName(title.trophyTitleName);
                 gameName = gameName.
