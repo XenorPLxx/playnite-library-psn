@@ -1,5 +1,11 @@
 AddonId: PlayStationLibrary_Builtin
 Packages:
+  - Version: 2.22
+    RequiredApiVersion: 6.8.0
+    ReleaseDate: 2023-04-25
+    PackageUrl: https://github.com/XenorPLxx/playnite-library-psn/releases/download/2.22/PlayStationLibrary_Builtin_2_22.pext
+    Changelog:
+      - Adds error handling so if one of the PSN APIs stops responding, rest still can be used to synchronise games
   - Version: 2.21
     RequiredApiVersion: 6.8.0
     ReleaseDate: 2023-04-25
