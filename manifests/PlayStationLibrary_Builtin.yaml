@@ -1,5 +1,11 @@
 AddonId: PlayStationLibrary_Builtin
 Packages:
+  - Version: 2.21
+    RequiredApiVersion: 6.8.0
+    ReleaseDate: 2023-04-25
+    PackageUrl: https://github.com/XenorPLxx/playnite-library-psn/releases/download/2.21/PlayStationLibrary_Builtin_2_21.pext
+    Changelog:
+      - Changes request limits following changes in PSN API
   - Version: 2.20
     RequiredApiVersion: 6.8.0
     ReleaseDate: 2022-12-17
