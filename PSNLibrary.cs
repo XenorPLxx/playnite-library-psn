@@ -68,7 +68,7 @@ namespace PSNLibrary
           Services.MigrateGames.call(this, allGames);
         }
 
-        allGames.AddRange(Services.GetGames.ParseThrophies(clientApi));
+        allGames.AddRange(Services.GetGames.ParseThrophies(this, clientApi));
 
         // This need to happen to merge games from different APIs
         foreach (var group in allGames.GroupBy(a => a.GameId))

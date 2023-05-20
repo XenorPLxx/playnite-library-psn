@@ -56,7 +56,7 @@ namespace PSNLibrary.Services
       }
     }
 
-    public static List<GameMetadata> ParseThrophies(PSNClient clientApi)
+    public static List<GameMetadata> ParseThrophies(PSNLibrary library, PSNClient clientApi)
     {
       var parsedGames = new List<GameMetadata>();
       var titles = new List<TrophyTitleMobile>();
@@ -91,8 +91,21 @@ namespace PSNLibrary.Services
 
         newGame.Platforms = new HashSet<MetadataProperty> { };
 
-
-
+        if (title.trophyTitlePlatform?.Contains("PSP") == true && library.SettingsViewModel.Settings.PSP)
+        {
+          newGame.Platforms.Add(new MetadataSpecProperty("sony_psp"));
+          legacyGames = true;
+        }
+        else if (title.trophyTitlePlatform?.Contains("PSVITA") == true && library.SettingsViewModel.Settings.PSVITA)
+        {
+          newGame.Platforms.Add(new MetadataSpecProperty("sony_vita"));
+          legacyGames = true;
+        }
+        else if (title.trophyTitlePlatform?.Contains("PS3") == true && library.SettingsViewModel.Settings.PS3)
+        {
+          newGame.Platforms.Add(new MetadataSpecProperty("sony_playstation3"));
+          legacyGames = true;
+        }
 
         // PS4 and PS5 games are added based on different APIs, but for PS3/VITA/PSP games only trophies API is available.
         if (legacyGames)
