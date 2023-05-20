@@ -1,8 +1,0 @@
-AddonId: LibraryExporterPS_Builtin
-Packages:
-  - Version: 2.0
-    RequiredApiVersion: 6.0.0
-    ReleaseDate: 2021-09-03
-    PackageUrl: https://github.com/JosefNemec/PlayniteExtensions/releases/download/1.0/LibraryExporterPS_Builtin_2_0.pext
-    Changelog:
-      - Playnite 9 support
