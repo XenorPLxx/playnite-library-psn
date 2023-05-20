@@ -1,7 +1,0 @@
-﻿Id: XboxLibrary_Builtin
-Name: Xbox library integration
-Author: Playnite
-Version: 2.2
-Module: XboxLibrary.dll
-Type: GameLibrary
-Icon: icon.png
