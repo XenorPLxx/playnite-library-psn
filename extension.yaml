@@ -1,0 +1,7 @@
+﻿Id: PSNLibrary_2ba68553-109e-48d5-b977-c4f8381e06f9
+Name: Custom Library Importer
+Author: John Doe
+Version: 1.0
+Module: PSNLibrary.dll
+Type: GameLibrary
+Icon: icon.png
