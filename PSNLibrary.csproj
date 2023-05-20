@@ -38,6 +38,7 @@
     <Reference Include="PresentationFramework" />
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Web" />
     <Reference Include="System.Xaml" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
@@ -48,13 +49,21 @@
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="PSNLibraryClient.cs" />
+    <Compile Include="Common\StringExtensions.cs" />
+    <Compile Include="Models\PSNModels.cs" />
+    <Compile Include="Services\GetGames.cs" />
+    <Compile Include="Services\MigrateGames.cs" />
+    <Compile Include="Services\ParserCategory.cs" />
+    <Compile Include="Services\PSNClient.cs" />
     <Compile Include="PSNLibrary.cs" />
-    <Compile Include="PSNLibrarySettings.cs" />
-    <Compile Include="PSNLibrarySettingsView.xaml.cs">
+    <Compile Include="Services\ParserGames.cs" />
+    <Compile Include="Settings\PSNLibrarySettings.cs" />
+    <Compile Include="Settings\PSNLibrarySettingsView.xaml.cs">
       <DependentUpon>PSNLibrarySettingsView.xaml</DependentUpon>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Services\ParserName.cs" />
+    <Compile Include="Services\ParserPlatform.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="extension.yaml">
@@ -77,7 +86,7 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
-    <Page Include="PSNLibrarySettingsView.xaml">
+    <Page Include="Settings\PSNLibrarySettingsView.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
