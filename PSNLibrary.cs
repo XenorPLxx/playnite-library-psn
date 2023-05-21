@@ -13,8 +13,8 @@ namespace PSNLibrary
 {
   public class PSNLibrary : LibraryPlugin
   {
-    // Playnite API access
-    private static readonly ILogger logger = LogManager.GetLogger();
+    // Playnite logger access
+    public static readonly ILogger logger = LogManager.GetLogger();
 
     // Settings access https://api.playnite.link/docs/master/tutorials/extensions/pluginSettings.html
     public PSNLibrarySettingsViewModel SettingsViewModel { get; set; }
@@ -60,9 +60,9 @@ namespace PSNLibrary
         var gamesFromApi = new List<GameMetadata>();
 
         // Start loading games from different APIs
-        gamesFromApi.AddRange(Services.GetGames.LoadAccountGameList(psnClient)); // AccountList has the best game names
-        gamesFromApi.AddRange(Services.GetGames.LoadMobilePlayedGameList(psnClient));
-        gamesFromApi.AddRange(Services.GetGames.LoadPlayedGameList(psnClient));
+        gamesFromApi.AddRange(Services.GetGames.LoadAccountGameList(this, psnClient)); // AccountList has the best game names
+        gamesFromApi.AddRange(Services.GetGames.LoadMobilePlayedGameList(this, psnClient));
+        gamesFromApi.AddRange(Services.GetGames.LoadPlayedGameList(this, psnClient));
 
         // Migration is based on API that accepts titleId, which trophy list API does not support
         if (SettingsViewModel.Settings.Migration) { Services.MigrateGames.call(this, gamesFromApi); }
