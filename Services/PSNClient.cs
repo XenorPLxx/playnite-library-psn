@@ -30,7 +30,7 @@ namespace PSNLibrary.Services
     private static readonly ILogger logger = LogManager.GetLogger();
     private IPlayniteAPI api;
     private MobileTokens mobileToken;
-    private readonly PSNLibrary library;
+    private readonly PSNLibrary psnLibrary;
     private readonly string tokenPath;
     private const int pageRequestLimit = 100;
     private const string loginUrl = @"https://web.np.playstation.com/api/session/v1/signin?redirect_uri=https://io.playstation.com/central/auth/login%3FpostSignInURL=https://www.playstation.com/home%26cancelURL=https://www.playstation.com/home&smcid=web:pdc";
@@ -43,11 +43,11 @@ namespace PSNLibrary.Services
     private const string trophiesMobileUrl = @"https://m.np.playstation.com/api/trophy/v1/users/me/trophyTitles?limit=250&offset={0}";
     private const string trophiesWithIdsMobileUrl = @"https://m.np.playstation.com/api/trophy/v1/users/me/titles/trophyTitles?npTitleIds={0}";
 
-    public PSNClient(PSNLibrary library)
+    public PSNClient(PSNLibrary psnLibrary)
     {
-      this.library = library;
-      this.api = library.PlayniteApi;
-      tokenPath = Path.Combine(library.GetPluginUserDataPath(), "token.json");
+      this.psnLibrary = psnLibrary;
+      this.api = psnLibrary.PlayniteApi;
+      tokenPath = Path.Combine(psnLibrary.GetPluginUserDataPath(), "token.json");
     }
 
     public void Login()
@@ -229,7 +229,7 @@ namespace PSNLibrary.Services
 
     public async Task CheckAuthentication()
     {
-      string npsso = library.SettingsViewModel.Settings.Npsso;
+      string npsso = psnLibrary.SettingsViewModel.Settings.Npsso;
       if (!File.Exists(tokenPath) && npsso == null)
       {
         throw new Exception("User is not authenticated: token file doesn't exist.");
@@ -413,7 +413,7 @@ namespace PSNLibrary.Services
           webView.Close();
         };
 
-        string npsso = library.SettingsViewModel.Settings.Npsso;
+        string npsso = psnLibrary.SettingsViewModel.Settings.Npsso;
         Playnite.SDK.HttpCookie npssoCookie = new Playnite.SDK.HttpCookie();
         npssoCookie.Domain = "ca.account.sony.com";
         npssoCookie.Value = npsso;
@@ -428,7 +428,7 @@ namespace PSNLibrary.Services
 
     public async Task<bool> GetIsUserLoggedIn()
     {
-      string npsso = library.SettingsViewModel.Settings.Npsso;
+      string npsso = psnLibrary.SettingsViewModel.Settings.Npsso;
       if (!File.Exists(tokenPath) && npsso == null)
       {
         return false;

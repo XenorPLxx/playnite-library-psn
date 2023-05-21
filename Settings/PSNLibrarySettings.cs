@@ -11,8 +11,9 @@ namespace PSNLibrary
   {
     public bool connectAccount = true;
     public bool downloadImageMetadata = true;
-    public bool lastPlayed = false;
-    public bool playtime = false;
+    public bool lastPlayed = true;
+    public bool playtime = true;
+    public bool playCount = true;
     public bool ps3 = true;
     public bool psp = true;
     public bool psvita = true;
@@ -23,6 +24,7 @@ namespace PSNLibrary
     public bool DownloadImageMetadata { get => downloadImageMetadata; set => SetValue(ref downloadImageMetadata, value); }
     public bool LastPlayed { get => lastPlayed; set => SetValue(ref lastPlayed, value); }
     public bool Playtime { get => playtime; set => SetValue(ref playtime, value); }
+    public bool PlayCount { get => playCount; set => SetValue(ref playCount, value); }
     public bool PS3 { get => ps3; set => SetValue(ref ps3, value); }
     public bool PSP { get => psp; set => SetValue(ref psp, value); }
     public bool PSVITA { get => psvita; set => SetValue(ref psvita, value); }
