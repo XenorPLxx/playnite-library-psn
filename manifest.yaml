@@ -1,5 +1,11 @@
 AddonId: PlayStationLibrary_Builtin
 Packages:
+  - Version: 2.24
+    RequiredApiVersion: 6.9.0
+    ReleaseDate: 2023-05-21
+    PackageUrl: https://github.com/XenorPLxx/playnite-library-psn/releases/download/2.24/PlayStationLibrary_Builtin_2_24.pext
+    Changelog:
+      - Plugin won't override LastPlayed date anymore if the one set is newer (legacy games set date based on last trophy acquired, which might be incorrect)
   - Version: 2.23
     RequiredApiVersion: 6.9.0
     ReleaseDate: 2023-05-21
