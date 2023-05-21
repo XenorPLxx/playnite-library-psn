@@ -52,6 +52,7 @@
     <Compile Include="Common\StringExtensions.cs" />
     <Compile Include="Models\PSNModels.cs" />
     <Compile Include="Services\GetGames.cs" />
+    <Compile Include="Services\ImportGames.cs" />
     <Compile Include="Services\MigrateGames.cs" />
     <Compile Include="Services\ParserCategory.cs" />
     <Compile Include="Services\PSNClient.cs" />

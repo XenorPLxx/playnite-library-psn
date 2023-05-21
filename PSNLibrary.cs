@@ -14,7 +14,6 @@ namespace PSNLibrary
   public class PSNLibrary : LibraryPlugin
   {
     // Playnite API access
-    private readonly INotificationsAPI notifications;
     private static readonly ILogger logger = LogManager.GetLogger();
 
     // Settings access https://api.playnite.link/docs/master/tutorials/extensions/pluginSettings.html
@@ -33,7 +32,6 @@ namespace PSNLibrary
     // LibraryPlugin constructor 
     public PSNLibrary(IPlayniteAPI api) : base(api)
     {
-      notifications = api.Notifications;
       SettingsViewModel = new PSNLibrarySettingsViewModel(this);
       Properties = new LibraryPluginProperties
       {
@@ -46,82 +44,38 @@ namespace PSNLibrary
     // Refactorable
     public override IEnumerable<Game> ImportGames(LibraryImportGamesArgs args)
     {
-      var importedGames = new List<Game>();
+      var newlyImportedGames = new List<Game>();
 
       Exception importError = null;
       if (!SettingsViewModel.Settings.ConnectAccount)
       {
-        return importedGames;
+        // Refactorable: notification about accuont not connected
+        return newlyImportedGames;
       }
 
       try
       {
-        var clientApi = new Services.PSNClient(this);
-        var allGames = new List<GameMetadata>();
-        allGames.AddRange(Services.GetGames.ParseAccountList(clientApi)); // AccountList has the best game names
-        allGames.AddRange(Services.GetGames.ParsePlayedMobileList(clientApi));
-        allGames.AddRange(Services.GetGames.ParsePlayedList(clientApi));
+        // PSNClient gets reused and needs access to settings, so this looks to be the best place to put it
+        var psnClient = new Services.PSNClient(this);
+        var gamesFromApi = new List<GameMetadata>();
 
-        // Migration is based on API that accepts titleId, that's why ParseThrophies is excluded
-        if (SettingsViewModel.Settings.Migration)
-        {
-          Services.MigrateGames.call(this, allGames);
-        }
+        // Start loading games from different APIs
+        gamesFromApi.AddRange(Services.GetGames.LoadAccountGameList(psnClient)); // AccountList has the best game names
+        gamesFromApi.AddRange(Services.GetGames.LoadMobilePlayedGameList(psnClient));
+        gamesFromApi.AddRange(Services.GetGames.LoadPlayedGameList(psnClient));
 
-        allGames.AddRange(Services.GetGames.ParseThrophies(this, clientApi));
+        // Migration is based on API that accepts titleId, which trophy list API does not support
+        if (SettingsViewModel.Settings.Migration) { Services.MigrateGames.call(this, gamesFromApi); }
 
-        // This need to happen to merge games from different APIs
-        foreach (var group in allGames.GroupBy(a => a.GameId))
-        {
-          var game = group.First();
-          if (PlayniteApi.ApplicationSettings.GetGameExcludedFromImport(game.GameId, Id))
-          {
-            continue;
-          }
+        // Load games for legacy platforms usign trophy list
+        gamesFromApi.AddRange(Services.GetGames.LoadTrophyList(this, psnClient));
 
-          var alreadyImported = PlayniteApi.Database.Games.FirstOrDefault(a => a.GameId == game.GameId && a.PluginId == Id);
-          if (alreadyImported == null)
-          {
-            game.Source = new MetadataNameProperty("PlayStation");
-            importedGames.Add(PlayniteApi.Database.ImportGame(game, this));
-          }
-          else
-          {
-            bool changed = false;
-            if (SettingsViewModel.Settings.LastPlayed)
-            {
-              var newLastActivity = group.FirstOrDefault(a => a.LastActivity != null)?.LastActivity;
-              if (newLastActivity != null && (alreadyImported.LastActivity == null || newLastActivity.Value.ToUniversalTime() != alreadyImported.LastActivity.Value.ToUniversalTime()))
-              {
-                alreadyImported.LastActivity = newLastActivity;
-                changed = true;
-              }
-            }
-            if (SettingsViewModel.Settings.Playtime)
-            {
-              var newPlaytime = group.FirstOrDefault(a => a.LastActivity != null)?.Playtime ?? alreadyImported.Playtime;
-              if (newPlaytime != alreadyImported.Playtime)
-              {
-                alreadyImported.Playtime = newPlaytime;
-                changed = true;
-              }
-
-              var newPlayCount = group.FirstOrDefault(a => a.LastActivity != null)?.PlayCount ?? alreadyImported.PlayCount;
-              if (newPlayCount != alreadyImported.PlayCount)
-              {
-                alreadyImported.PlayCount = newPlayCount;
-                changed = true;
-              }
-            }
-            if ((SettingsViewModel.Settings.LastPlayed || SettingsViewModel.Settings.Playtime) && changed)
-            {
-              PlayniteApi.Database.Games.Update(alreadyImported);
-            }
-          }
-        }
+        // Merge games from different APIs prioritizing according to order above and import all new games and changed games to Playnite
+        newlyImportedGames = Services.ImportGames.call(this, gamesFromApi);
       }
       catch (Exception e) when (!Debugger.IsAttached)
       {
+        // notifications
         logger.Error(e, "Failed to import PSN games.");
         importError = e;
       }
@@ -131,7 +85,7 @@ namespace PSNLibrary
         PlayniteApi.Notifications.Add(new NotificationMessage(
             ImportErrorMessageId,
             string.Format(PlayniteApi.Resources.GetString("LOCLibraryImportError"), Name) +
-            System.Environment.NewLine + importError.Message,
+            Environment.NewLine + importError.Message,
             NotificationType.Error,
             () => OpenSettingsView()));
       }
@@ -140,7 +94,7 @@ namespace PSNLibrary
         PlayniteApi.Notifications.Remove(ImportErrorMessageId);
       }
 
-      return importedGames;
+      return newlyImportedGames;
     }
 
     public override ISettings GetSettings(bool firstRunSettings)

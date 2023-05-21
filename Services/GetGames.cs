@@ -11,11 +11,11 @@ namespace PSNLibrary.Services
 {
   internal class GetGames
   {
-    public static List<GameMetadata> ParseAccountList(PSNClient clientApi)
+    public static List<GameMetadata> LoadAccountGameList(PSNClient psnClient)
     {
       try
       {
-        var gamesToParse = clientApi.GetAccountTitles().GetAwaiter().GetResult();
+        var gamesToParse = psnClient.GetAccountTitles().GetAwaiter().GetResult();
         return ParserGames.call(gamesToParse);
       }
       catch (Exception e)
@@ -26,11 +26,11 @@ namespace PSNLibrary.Services
       }
     }
 
-    public static List<GameMetadata> ParsePlayedList(PSNClient clientApi)
+    public static List<GameMetadata> LoadPlayedGameList(PSNClient psnClient)
     {
       try
       {
-        var gamesToParse = clientApi.GetPlayedTitles().GetAwaiter().GetResult();
+        var gamesToParse = psnClient.GetPlayedTitles().GetAwaiter().GetResult();
         return ParserGames.call(gamesToParse);
       }
       catch (Exception e)
@@ -41,11 +41,11 @@ namespace PSNLibrary.Services
       }
     }
 
-    public static List<GameMetadata> ParsePlayedMobileList(PSNClient clientApi)
+    public static List<GameMetadata> LoadMobilePlayedGameList(PSNClient psnClient)
     {
       try
       {
-        var gamesToParse = clientApi.GetPlayedTitlesMobile().GetAwaiter().GetResult();
+        var gamesToParse = psnClient.GetPlayedTitlesMobile().GetAwaiter().GetResult();
         return ParserGames.call(gamesToParse);
       }
       catch (Exception e)
@@ -56,14 +56,14 @@ namespace PSNLibrary.Services
       }
     }
 
-    public static List<GameMetadata> ParseThrophies(PSNLibrary library, PSNClient clientApi)
+    public static List<GameMetadata> LoadTrophyList(PSNLibrary psnLibrary, PSNClient psnClient)
     {
       var parsedGames = new List<GameMetadata>();
       var titles = new List<TrophyTitleMobile>();
 
       try
       {
-        titles = clientApi.GetTrohpiesMobile().GetAwaiter().GetResult();
+        titles = psnClient.GetTrohpiesMobile().GetAwaiter().GetResult();
       }
       catch (Exception e)
       {
@@ -91,17 +91,17 @@ namespace PSNLibrary.Services
 
         newGame.Platforms = new HashSet<MetadataProperty> { };
 
-        if (title.trophyTitlePlatform?.Contains("PSP") == true && library.SettingsViewModel.Settings.PSP)
+        if (title.trophyTitlePlatform?.Contains("PSP") == true && psnLibrary.SettingsViewModel.Settings.PSP)
         {
           newGame.Platforms.Add(new MetadataSpecProperty("sony_psp"));
           legacyGames = true;
         }
-        else if (title.trophyTitlePlatform?.Contains("PSVITA") == true && library.SettingsViewModel.Settings.PSVITA)
+        else if (title.trophyTitlePlatform?.Contains("PSVITA") == true && psnLibrary.SettingsViewModel.Settings.PSVITA)
         {
           newGame.Platforms.Add(new MetadataSpecProperty("sony_vita"));
           legacyGames = true;
         }
-        else if (title.trophyTitlePlatform?.Contains("PS3") == true && library.SettingsViewModel.Settings.PS3)
+        else if (title.trophyTitlePlatform?.Contains("PS3") == true && psnLibrary.SettingsViewModel.Settings.PS3)
         {
           newGame.Platforms.Add(new MetadataSpecProperty("sony_playstation3"));
           legacyGames = true;
