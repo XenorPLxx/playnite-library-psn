@@ -1,5 +1,11 @@
 AddonId: PlayStationLibrary_Builtin
 Packages:
+  - Version: 2.25
+    RequiredApiVersion: 6.9.0
+    ReleaseDate: 2023-05-21
+    PackageUrl: https://github.com/XenorPLxx/playnite-library-psn/releases/download/2.25/PlayStationLibrary_Builtin_2_25.pext
+    Changelog:
+      - Removes external localization dependencies (makes sure that all labels are properly displayed even on a clean install)
   - Version: 2.24
     RequiredApiVersion: 6.9.0
     ReleaseDate: 2023-05-21
