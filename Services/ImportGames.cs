@@ -30,9 +30,9 @@ namespace PSNLibrary.Services
         if (alreadyImportedGame == null)
         {
           game.Source = new MetadataNameProperty("PlayStation");
-          findLastPlayed(psnLibrary, gameGroup, game);
-          findPlaytime(psnLibrary, gameGroup, game);
-          findPlayCount(psnLibrary, gameGroup, game);
+          setLastPlayed(psnLibrary, gameGroup, game);
+          setPlaytime(psnLibrary, gameGroup, game);
+          setPlayCount(psnLibrary, gameGroup, game);
           newlyImportedGames.Add(psnLibrary.PlayniteApi.Database.ImportGame(game, psnLibrary));
         }
         // If game is already in the database, just update activity related fields
@@ -40,9 +40,9 @@ namespace PSNLibrary.Services
         {
           // Track if actually changed so there's no empty updates triggered
           bool gameChanged = false;
-          findLastPlayed(psnLibrary, gameGroup, alreadyImportedGame, ref gameChanged);
-          findPlaytime(psnLibrary, gameGroup, alreadyImportedGame, ref gameChanged);
-          findPlayCount(psnLibrary, gameGroup, alreadyImportedGame, ref gameChanged);
+          gameChanged |= setLastPlayed(psnLibrary, gameGroup, alreadyImportedGame);
+          gameChanged |= setPlaytime(psnLibrary, gameGroup, alreadyImportedGame);
+          gameChanged |= setPlayCount(psnLibrary, gameGroup, alreadyImportedGame);
 
           // Update existing database entry
           if (gameChanged) { psnLibrary.PlayniteApi.Database.Games.Update(alreadyImportedGame); }
@@ -51,20 +51,21 @@ namespace PSNLibrary.Services
       return newlyImportedGames;
     }
 
-    private static void findLastPlayed(PSNLibrary psnLibrary, IGrouping<string, GameMetadata> gameGroup, Game alreadyImportedGame, ref bool gameChanged)
+    private static bool setLastPlayed(PSNLibrary psnLibrary, IGrouping<string, GameMetadata> gameGroup, Game alreadyImportedGame)
     {
       if (psnLibrary.SettingsViewModel.Settings.LastPlayed)
       {
         var newLastActivity = gameGroup.FirstOrDefault(a => a.LastActivity != null)?.LastActivity;
-        if (newLastActivity != null && (alreadyImportedGame.LastActivity == null || newLastActivity.Value.ToUniversalTime() != alreadyImportedGame.LastActivity.Value.ToUniversalTime()))
+        if (newLastActivity != null && (alreadyImportedGame.LastActivity == null || newLastActivity.Value.ToUniversalTime() > alreadyImportedGame.LastActivity.Value.ToUniversalTime()))
         {
           alreadyImportedGame.LastActivity = newLastActivity;
-          gameChanged = true;
+          return true;
         }
       }
+      return false;
     }
 
-    private static void findLastPlayed(PSNLibrary psnLibrary, IGrouping<string, GameMetadata> gameGroup, GameMetadata newGame)
+    private static void setLastPlayed(PSNLibrary psnLibrary, IGrouping<string, GameMetadata> gameGroup, GameMetadata newGame)
     {
       if (psnLibrary.SettingsViewModel.Settings.LastPlayed)
       {
@@ -73,7 +74,7 @@ namespace PSNLibrary.Services
       }
     }
 
-    private static void findPlaytime(PSNLibrary psnLibrary, IGrouping<string, GameMetadata> gameGroup, Game alreadyImportedGame, ref bool gameChanged)
+    private static bool setPlaytime(PSNLibrary psnLibrary, IGrouping<string, GameMetadata> gameGroup, Game alreadyImportedGame)
     {
       if (psnLibrary.SettingsViewModel.Settings.Playtime)
       {
@@ -81,12 +82,13 @@ namespace PSNLibrary.Services
         if (newPlaytime != alreadyImportedGame.Playtime)
         {
           alreadyImportedGame.Playtime = newPlaytime;
-          gameChanged = true;
+          return true;
         }
       }
+      return false;
     }
 
-    private static void findPlaytime(PSNLibrary psnLibrary, IGrouping<string, GameMetadata> gameGroup, GameMetadata newGame)
+    private static void setPlaytime(PSNLibrary psnLibrary, IGrouping<string, GameMetadata> gameGroup, GameMetadata newGame)
     {
       if (psnLibrary.SettingsViewModel.Settings.Playtime)
       {
@@ -95,7 +97,7 @@ namespace PSNLibrary.Services
       }
     }
 
-    private static void findPlayCount(PSNLibrary psnLibrary, IGrouping<string, GameMetadata> gameGroup, Game alreadyImportedGame, ref bool gameChanged)
+    private static bool setPlayCount(PSNLibrary psnLibrary, IGrouping<string, GameMetadata> gameGroup, Game alreadyImportedGame)
     {
       if (psnLibrary.SettingsViewModel.Settings.PlayCount)
       {
@@ -103,12 +105,13 @@ namespace PSNLibrary.Services
         if (newPlayCount != alreadyImportedGame.PlayCount)
         {
           alreadyImportedGame.PlayCount = newPlayCount;
-          gameChanged = true;
+          return true;
         }
       }
+      return false;
     }
 
-    private static void findPlayCount(PSNLibrary psnLibrary, IGrouping<string, GameMetadata> gameGroup, GameMetadata newGame)
+    private static void setPlayCount(PSNLibrary psnLibrary, IGrouping<string, GameMetadata> gameGroup, GameMetadata newGame)
     {
       if (psnLibrary.SettingsViewModel.Settings.PlayCount)
       {

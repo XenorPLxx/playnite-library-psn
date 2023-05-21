@@ -6,7 +6,7 @@ Packages:
     PackageUrl: https://github.com/XenorPLxx/playnite-library-psn/releases/download/2.23/PlayStationLibrary_Builtin_2_23.pext
     Changelog:
       - Fixes playtime zeroing for legacy games https://github.com/XenorPLxx/playnite-library-psn/issues/14
-      - Fixes play activity parameters not being donwloaded on first game import
+      - Fixes play activity parameters not being downloaded on first game import
   - Version: 2.22
     RequiredApiVersion: 6.8.0
     ReleaseDate: 2023-04-25
