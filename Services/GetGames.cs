@@ -11,7 +11,7 @@ namespace PSNLibrary.Services
 {
   internal class GetGames
   {
-    public static List<GameMetadata> LoadAccountGameList(PSNClient psnClient)
+    public static List<GameMetadata> LoadAccountGameList(PSNLibrary psnLibrary, PSNClient psnClient)
     {
       try
       {
@@ -20,13 +20,13 @@ namespace PSNLibrary.Services
       }
       catch (Exception e)
       {
-        //logger.Error(e, "PSN_ParseAccountList");
-        //notifications.Add(new NotificationMessage("PSN_ParseAccountList", "PSN: Account games list couldn't be parsed.", NotificationType.Error));
+        PSNLibrary.logger.Error(e, "PSN_LoadAccountGameList");
+        psnLibrary.PlayniteApi.Notifications.Add(new NotificationMessage("PSN_LoadAccountGameList", "PSN: API 1 (out of 4) unresponsive.", NotificationType.Error));
         return new List<GameMetadata>();
       }
     }
 
-    public static List<GameMetadata> LoadPlayedGameList(PSNClient psnClient)
+    public static List<GameMetadata> LoadPlayedGameList(PSNLibrary psnLibrary, PSNClient psnClient)
     {
       try
       {
@@ -35,13 +35,13 @@ namespace PSNLibrary.Services
       }
       catch (Exception e)
       {
-        //logger.Error(e, "PSN_ParsePlayedList");
-        //notifications.Add(new NotificationMessage("PSN_ParsePlayedList", "PSN: Played games list couldn't be parsed.", NotificationType.Error));
+        PSNLibrary.logger.Error(e, "PSN_LoadPlayedGameList");
+        psnLibrary.PlayniteApi.Notifications.Add(new NotificationMessage("PSN_LoadPlayedGameList", "PSN: API 2 (out of 4) unresponsive.", NotificationType.Error));
         return new List<GameMetadata>();
       }
     }
 
-    public static List<GameMetadata> LoadMobilePlayedGameList(PSNClient psnClient)
+    public static List<GameMetadata> LoadMobilePlayedGameList(PSNLibrary psnLibrary, PSNClient psnClient)
     {
       try
       {
@@ -50,8 +50,8 @@ namespace PSNLibrary.Services
       }
       catch (Exception e)
       {
-        //logger.Error(e, "PSN_ParsePlayedMobileList");
-        //notifications.Add(new NotificationMessage("PSN_ParsePlayedMobileList", "PSN: Mobile played games list couldn't be parsed.", NotificationType.Error));
+        PSNLibrary.logger.Error(e, "PSN_LoadMobilePlayedGameList");
+        psnLibrary.PlayniteApi.Notifications.Add(new NotificationMessage("PSN_LoadMobilePlayedGameList", "PSN: API 3 (out of 4) unresponsive.", NotificationType.Error));
         return new List<GameMetadata>();
       }
     }
@@ -67,8 +67,8 @@ namespace PSNLibrary.Services
       }
       catch (Exception e)
       {
-        //logger.Error(e, "PSN_ParseThrophies");
-        //notifications.Add(new NotificationMessage("PSN_ParseThrophies", "PSN: Trophy list couldn't be parsed.", NotificationType.Error));
+        PSNLibrary.logger.Error(e, "PSN_LoadTrophyList");
+        psnLibrary.PlayniteApi.Notifications.Add(new NotificationMessage("PSN_LoadTrophyList", "PSN: API 4 (out of 4) unresponsive.", NotificationType.Error));
         return parsedGames;
       }
 
