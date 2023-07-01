@@ -105,15 +105,7 @@ namespace PSNLibrary
     {
       get
       {
-        try
-        {
-          // clientApi.CheckAuthentication().GetAwaiter().GetResult();
-          return true;
-        }
-        catch
-        {
-          return false;
-        }
+        return Services.CheckAuthentication.call(clientApi);
       }
     }
 
@@ -148,7 +140,7 @@ namespace PSNLibrary
     }
     private void CheckAuthentication()
     {
-      // clientApi.ClearAuthentication();
+      clientApi.ClearAuthentication();
       OnPropertyChanged(nameof(IsUserLoggedIn));
     }
   }

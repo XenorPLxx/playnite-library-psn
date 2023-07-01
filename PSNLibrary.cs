@@ -59,19 +59,23 @@ namespace PSNLibrary
         var psnClient = new Services.PSNClient(this);
         var gamesFromApi = new List<GameMetadata>();
 
-        // Start loading games from different APIs
-        gamesFromApi.AddRange(Services.GetGames.LoadAccountGameList(this, psnClient)); // AccountList has the best game names
-        gamesFromApi.AddRange(Services.GetGames.LoadMobilePlayedGameList(this, psnClient));
-        gamesFromApi.AddRange(Services.GetGames.LoadPlayedGameList(this, psnClient));
+        // Check for authentication
+        if (Services.CheckAuthentication.call(this, psnClient))
+        { 
+          // Start loading games from different APIs
+          gamesFromApi.AddRange(Services.GetGames.LoadAccountGameList(this, psnClient)); // AccountList has the best game names
+          gamesFromApi.AddRange(Services.GetGames.LoadMobilePlayedGameList(this, psnClient));
+          gamesFromApi.AddRange(Services.GetGames.LoadPlayedGameList(this, psnClient));
 
-        // Migration is based on API that accepts titleId, which trophy list API does not support
-        if (SettingsViewModel.Settings.Migration) { Services.MigrateGames.call(this, gamesFromApi); }
+          // Migration is based on API that accepts titleId, which trophy list API does not support
+          if (SettingsViewModel.Settings.Migration) { Services.MigrateGames.call(this, gamesFromApi); }
 
-        // Load games for legacy platforms usign trophy list
-        gamesFromApi.AddRange(Services.GetGames.LoadTrophyList(this, psnClient));
+          // Load games for legacy platforms usign trophy list
+          gamesFromApi.AddRange(Services.GetGames.LoadTrophyList(this, psnClient));
 
-        // Merge games from different APIs prioritizing according to order above and import all new games and changed games to Playnite
-        newlyImportedGames = Services.ImportGames.call(this, gamesFromApi);
+          // Merge games from different APIs prioritizing according to order above and import all new games and changed games to Playnite
+          newlyImportedGames = Services.ImportGames.call(this, gamesFromApi);
+        }
       }
       catch (Exception e) when (!Debugger.IsAttached)
       {

@@ -269,8 +269,6 @@ namespace PSNLibrary.Services
 
     public async Task<List<PlayedTitlesResponseData.PlayedTitlesRetrieve.Title>> GetPlayedTitles()
     {
-      await CheckAuthentication();
-
       var titles = new List<PlayedTitlesResponseData.PlayedTitlesRetrieve.Title>();
 
       var cookieContainer = ReadCookiesFromDisk();
@@ -288,8 +286,6 @@ namespace PSNLibrary.Services
 
     public async Task<List<AccountTitlesResponseData.AccountTitlesRetrieve.Title>> GetAccountTitles()
     {
-      await CheckAuthentication();
-
       var titles = new List<AccountTitlesResponseData.AccountTitlesRetrieve.Title>();
 
       var cookieContainer = ReadCookiesFromDisk();
@@ -319,8 +315,6 @@ namespace PSNLibrary.Services
 
     public async Task<List<PlayedTitlesMobile.PlayedTitleMobile>> GetPlayedTitlesMobile()
     {
-      await CheckAuthentication();
-
       var titles = new List<PlayedTitlesMobile.PlayedTitleMobile>();
 
       var cookieContainer = ReadCookiesFromDisk();
@@ -348,8 +342,6 @@ namespace PSNLibrary.Services
 
     public async Task<List<TrophyTitleMobile>> GetTrohpiesMobile()
     {
-      await CheckAuthentication();
-
       var titles = new List<TrophyTitleMobile>();
 
       var cookieContainer = ReadCookiesFromDisk();
@@ -376,8 +368,6 @@ namespace PSNLibrary.Services
 
     public async Task<List<TrophyTitlesWithIdsMobile.TrophyTitleWithIdsMobile>> GetTrohpiesWithIdsMobile(string[] titleIdsArray)
     {
-      await CheckAuthentication();
-
       var titles = new List<TrophyTitlesWithIdsMobile.TrophyTitleWithIdsMobile>();
 
       var cookieContainer = ReadCookiesFromDisk();
