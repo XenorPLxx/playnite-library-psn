@@ -130,7 +130,7 @@ namespace PSNLibrary
       Settings.Npsso = null;
       try
       {
-        // clientApi.Login();
+        clientApi.Login();
         OnPropertyChanged(nameof(IsUserLoggedIn));
       }
       catch (Exception e) when (!Debugger.IsAttached)
