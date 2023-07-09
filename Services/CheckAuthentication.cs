@@ -20,7 +20,13 @@ namespace PSNLibrary.Services
       catch (Exception e)
       {
         PSNLibrary.logger.Error(e, "PSN_CheckAuthentication");
-        psnLibrary.PlayniteApi.Notifications.Add(new NotificationMessage("PSN_CheckAuthentication", "PSN: Authentication check failed.", NotificationType.Error));
+        psnLibrary.PlayniteApi.Notifications.Add(
+          new NotificationMessage(
+            "PSN_CheckAuthentication",
+            "PSN: Authentication check failed.",
+            NotificationType.Error,
+            () => psnLibrary.OpenSettingsView())
+          );
         return false;
       }
     }
