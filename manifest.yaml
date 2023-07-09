@@ -1,5 +1,11 @@
 AddonId: PlayStationLibrary_Builtin
 Packages:
+  - Version: 2.28
+    RequiredApiVersion: 6.9.0
+    ReleaseDate: 2023-07-09
+    PackageUrl: https://github.com/XenorPLxx/playnite-library-psn/releases/download/2.28/PlayStationLibrary_Builtin_2_28.pext
+    Changelog:
+      - Makes authentication error notification clickable
   - Version: 2.27
     RequiredApiVersion: 6.9.0
     ReleaseDate: 2023-07-01
