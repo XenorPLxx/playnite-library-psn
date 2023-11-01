@@ -31,7 +31,7 @@ namespace PSNLibrary.Services
       try
       {
         var gamesToParse = psnClient.GetPlayedTitles().GetAwaiter().GetResult();
-        return ParserGames.call(gamesToParse);
+        return ParserGames.call(gamesToParse, psnLibrary);
       }
       catch (Exception e)
       {
@@ -75,6 +75,7 @@ namespace PSNLibrary.Services
       foreach (var title in titles)
       {
         var gameName = ParserName.call(title.trophyTitleName);
+
         gameName = gameName.
             TrimEndString("Trophies", StringComparison.OrdinalIgnoreCase).
             TrimEndString("Trophy", StringComparison.OrdinalIgnoreCase).

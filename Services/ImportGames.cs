@@ -6,6 +6,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
+#nullable enable
+
 namespace PSNLibrary.Services
 {
   internal class ImportGames
@@ -144,7 +146,7 @@ namespace PSNLibrary.Services
 
     private static void setTags(PSNLibrary psnLibrary, IGrouping<string, GameMetadata> gameGroup, GameMetadata newGame)
     {
-      if (psnLibrary.SettingsViewModel.Settings.Tags)
+      if (psnLibrary.SettingsViewModel.Settings.Tags && !psnLibrary.SettingsViewModel.Settings.NoTags)
       {
         var newTags = gameGroup.FirstOrDefault(a => a.Tags?.Count != 0)?.Tags ?? newGame.Tags;
         newGame.Tags = newTags;

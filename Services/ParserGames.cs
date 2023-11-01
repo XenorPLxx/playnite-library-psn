@@ -36,7 +36,7 @@ namespace PSNLibrary.Services
     }
 
     // TODO: Figure out smarter way to share code without overloading
-    public static List<GameMetadata> call(List<PlayedTitlesResponseData.PlayedTitlesRetrieve.Title> gamesToParse)
+    public static List<GameMetadata> call(List<PlayedTitlesResponseData.PlayedTitlesRetrieve.Title> gamesToParse, PSNLibrary psnLibrary)
     {
       var parsedGames = new List<GameMetadata>();
       foreach (var title in gamesToParse)
@@ -44,6 +44,7 @@ namespace PSNLibrary.Services
         var gameName = ParserName.call(title.name);
 
         string platform = ParserPlatform.call(title.platform);
+        var tag = ParserSubscription.call(title.subscriptionService, psnLibrary);
 
         parsedGames.Add(new GameMetadata
         {
@@ -51,7 +52,8 @@ namespace PSNLibrary.Services
           Name = gameName,
           //CoverImage = SettingsViewModel.Settings.DownloadImageMetadata ? new MetadataFile(title.image.url) : null,
           Platforms = platform.IsNullOrEmpty() ? null : new HashSet<MetadataProperty> { new MetadataSpecProperty(platform) },
-          LastActivity = title.lastPlayedDateTime
+          LastActivity = title.lastPlayedDateTime,
+          Tags = tag == Guid.Empty ? null : new HashSet<MetadataProperty> { new MetadataIdProperty(tag) }
         });
       }
 
