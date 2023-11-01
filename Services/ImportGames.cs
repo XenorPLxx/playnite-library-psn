@@ -33,6 +33,7 @@ namespace PSNLibrary.Services
           setLastPlayed(psnLibrary, gameGroup, game);
           setPlaytime(psnLibrary, gameGroup, game);
           setPlayCount(psnLibrary, gameGroup, game);
+          setTags(psnLibrary, gameGroup, game);
           newlyImportedGames.Add(psnLibrary.PlayniteApi.Database.ImportGame(game, psnLibrary));
         }
         // If game is already in the database, just update activity related fields
@@ -43,6 +44,7 @@ namespace PSNLibrary.Services
           gameChanged |= setLastPlayed(psnLibrary, gameGroup, alreadyImportedGame);
           gameChanged |= setPlaytime(psnLibrary, gameGroup, alreadyImportedGame);
           gameChanged |= setPlayCount(psnLibrary, gameGroup, alreadyImportedGame);
+          gameChanged |= setTags(psnLibrary, gameGroup, alreadyImportedGame);
 
           // Update existing database entry
           if (gameChanged) { psnLibrary.PlayniteApi.Database.Games.Update(alreadyImportedGame); }
@@ -117,6 +119,39 @@ namespace PSNLibrary.Services
       {
         var newPlayCount = gameGroup.FirstOrDefault(a => a.PlayCount != 0)?.PlayCount ?? newGame.PlayCount;
         newGame.PlayCount = newPlayCount;
+      }
+    }
+
+    private static bool setTags(PSNLibrary psnLibrary, IGrouping<string, GameMetadata> gameGroup, Game alreadyImportedGame)
+    {
+      if (psnLibrary.SettingsViewModel.Settings.Tags)
+      {
+        var newTags = gameGroup.FirstOrDefault(a => a.Tags?.Count != 0)?.Tags;
+        
+        newTags?.ForEach(newTag =>
+        {
+          if (alreadyImportedGame.TagIds == null)
+          {
+            alreadyImportedGame.TagIds = new List<Guid>();
+          }
+          alreadyImportedGame.TagIds.AddMissing(((Playnite.SDK.Models.MetadataIdProperty)newTag).Id);
+        });
+        
+        return true;
+      }
+      return false;
+    }
+
+    private static void setTags(PSNLibrary psnLibrary, IGrouping<string, GameMetadata> gameGroup, GameMetadata newGame)
+    {
+      if (psnLibrary.SettingsViewModel.Settings.Tags)
+      {
+        var newTags = gameGroup.FirstOrDefault(a => a.Tags?.Count != 0)?.Tags ?? newGame.Tags;
+        newGame.Tags = newTags;
+      }
+      else
+      {
+        newGame.Tags = null;
       }
     }
   }

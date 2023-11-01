@@ -18,6 +18,7 @@ namespace PSNLibrary
     public bool psp = true;
     public bool psvita = true;
     public bool migration = true;
+    public bool tags = true;
     private string npsso = string.Empty;
 
     public bool ConnectAccount { get => connectAccount; set => SetValue(ref connectAccount, value); }
@@ -29,6 +30,7 @@ namespace PSNLibrary
     public bool PSP { get => psp; set => SetValue(ref psp, value); }
     public bool PSVITA { get => psvita; set => SetValue(ref psvita, value); }
     public bool Migration { get => migration; set => SetValue(ref migration, value); }
+    public bool Tags { get => tags; set => SetValue(ref tags, value); }
     public string Npsso { get => npsso; set => SetValue(ref npsso, value); }
   }
 

@@ -16,7 +16,7 @@ namespace PSNLibrary.Services
       try
       {
         var gamesToParse = psnClient.GetAccountTitles().GetAwaiter().GetResult();
-        return ParserGames.call(gamesToParse);
+        return ParserGames.call(gamesToParse, psnLibrary);
       }
       catch (Exception e)
       {

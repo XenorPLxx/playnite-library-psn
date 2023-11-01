@@ -1,4 +1,5 @@
-﻿using Playnite.SDK.Models;
+﻿using Playnite.SDK;
+using Playnite.SDK.Models;
 using PSNLibrary.Models;
 using System;
 using System.Collections.Generic;
@@ -11,7 +12,7 @@ namespace PSNLibrary.Services
 {
   internal class ParserGames
   {
-    public static List<GameMetadata> call(List<AccountTitlesResponseData.AccountTitlesRetrieve.Title> gamesToParse)
+    public static List<GameMetadata> call(List<AccountTitlesResponseData.AccountTitlesRetrieve.Title> gamesToParse, PSNLibrary psnLibrary)
     {
       var parsedGames = new List<GameMetadata>();
       foreach (var title in gamesToParse)
@@ -19,13 +20,15 @@ namespace PSNLibrary.Services
         var gameName = ParserName.call(title.name);
 
         string platform = ParserPlatform.call(title.platform);
+        var tag = ParserSubscription.call(title.subscriptionService, psnLibrary);
 
         parsedGames.Add(new GameMetadata
         {
           GameId = title.titleId,
           Name = gameName,
           //CoverImage = SettingsViewModel.Settings.DownloadImageMetadata ? new MetadataFile(title.image.url) : null,
-          Platforms = platform.IsNullOrEmpty() ? null : new HashSet<MetadataProperty> { new MetadataSpecProperty(platform) }
+          Platforms = platform.IsNullOrEmpty() ? null : new HashSet<MetadataProperty> { new MetadataSpecProperty(platform) },
+          Tags = tag == Guid.Empty ? null : new HashSet<MetadataProperty> { new MetadataIdProperty(tag) }
         });
       }
 
