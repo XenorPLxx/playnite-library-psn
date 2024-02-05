@@ -1,5 +1,12 @@
 AddonId: PlayStationLibrary_Builtin
 Packages:
+  - Version: 2.31
+    RequiredApiVersion: 6.9.0
+    ReleaseDate: 2024-02-05
+    PackageUrl: https://github.com/XenorPLxx/playnite-library-psn/releases/download/2.31/PlayStationLibrary_Builtin_2_31.pext
+    Changelog:
+      - Adds PlayStation Plus as a source option
+      - Adds installation warning
   - Version: 2.30
     RequiredApiVersion: 6.9.0
     ReleaseDate: 2023-11-01
