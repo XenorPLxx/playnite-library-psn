@@ -21,6 +21,7 @@ namespace PSNLibrary.Services
 
         string platform = ParserPlatform.call(title.platform);
         var tag = ParserSubscription.call(title.subscriptionService, psnLibrary);
+        var source = ParserSource.call(title.subscriptionService, psnLibrary);
 
         parsedGames.Add(new GameMetadata
         {
@@ -28,7 +29,8 @@ namespace PSNLibrary.Services
           Name = gameName,
           //CoverImage = SettingsViewModel.Settings.DownloadImageMetadata ? new MetadataFile(title.image.url) : null,
           Platforms = platform.IsNullOrEmpty() ? null : new HashSet<MetadataProperty> { new MetadataSpecProperty(platform) },
-          Tags = tag == Guid.Empty ? null : new HashSet<MetadataProperty> { new MetadataIdProperty(tag) }
+          Tags = tag == Guid.Empty ? null : new HashSet<MetadataProperty> { new MetadataIdProperty(tag) },
+          Source = new MetadataNameProperty(source),
         });
       }
 
@@ -44,7 +46,6 @@ namespace PSNLibrary.Services
         var gameName = ParserName.call(title.name);
 
         string platform = ParserPlatform.call(title.platform);
-        var tag = ParserSubscription.call(title.subscriptionService, psnLibrary);
 
         parsedGames.Add(new GameMetadata
         {
@@ -53,7 +54,6 @@ namespace PSNLibrary.Services
           //CoverImage = SettingsViewModel.Settings.DownloadImageMetadata ? new MetadataFile(title.image.url) : null,
           Platforms = platform.IsNullOrEmpty() ? null : new HashSet<MetadataProperty> { new MetadataSpecProperty(platform) },
           LastActivity = title.lastPlayedDateTime,
-          Tags = tag == Guid.Empty ? null : new HashSet<MetadataProperty> { new MetadataIdProperty(tag) }
         });
       }
 

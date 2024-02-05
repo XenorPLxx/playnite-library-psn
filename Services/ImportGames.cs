@@ -31,7 +31,7 @@ namespace PSNLibrary.Services
         // If game is not imported, import and add it to the return list
         if (alreadyImportedGame == null)
         {
-          game.Source = new MetadataNameProperty("PlayStation");
+          setSource(psnLibrary, gameGroup, game);
           setLastPlayed(psnLibrary, gameGroup, game);
           setPlaytime(psnLibrary, gameGroup, game);
           setPlayCount(psnLibrary, gameGroup, game);
@@ -43,6 +43,7 @@ namespace PSNLibrary.Services
         {
           // Track if actually changed so there's no empty updates triggered
           bool gameChanged = false;
+          gameChanged |= setSource(psnLibrary, gameGroup, alreadyImportedGame);
           gameChanged |= setLastPlayed(psnLibrary, gameGroup, alreadyImportedGame);
           gameChanged |= setPlaytime(psnLibrary, gameGroup, alreadyImportedGame);
           gameChanged |= setPlayCount(psnLibrary, gameGroup, alreadyImportedGame);
@@ -129,17 +130,23 @@ namespace PSNLibrary.Services
       if (psnLibrary.SettingsViewModel.Settings.Tags)
       {
         var newTags = gameGroup.FirstOrDefault(a => a.Tags?.Count != 0)?.Tags;
-        
+
+        if (alreadyImportedGame.TagIds == null)
+        {
+          alreadyImportedGame.TagIds = new List<Guid>();
+        }
+
+        var startingCount = alreadyImportedGame.TagIds.Count();
+
         newTags?.ForEach(newTag =>
         {
-          if (alreadyImportedGame.TagIds == null)
-          {
-            alreadyImportedGame.TagIds = new List<Guid>();
-          }
           alreadyImportedGame.TagIds.AddMissing(((Playnite.SDK.Models.MetadataIdProperty)newTag).Id);
         });
         
-        return true;
+        if (startingCount < alreadyImportedGame.TagIds.Count())
+        {
+          return true;
+        }        
       }
       return false;
     }
@@ -154,6 +161,40 @@ namespace PSNLibrary.Services
       else
       {
         newGame.Tags = null;
+      }
+    }
+
+    private static bool setSource(PSNLibrary psnLibrary, IGrouping<string, GameMetadata> gameGroup, Game alreadyImportedGame)
+    {
+      if (psnLibrary.SettingsViewModel.Settings.PlusSource)
+      {        
+        if (gameGroup.Any(g => g.Source?.ToString() == "PlayStation") && alreadyImportedGame.Source.ToString() == "PlayStation Plus")
+        {
+          alreadyImportedGame.SourceId = psnLibrary.PlayniteApi.Database.Sources.Add("PlayStation").Id;
+          return true;
+        } else if (gameGroup.Any(g => g.Source?.ToString() == "PlayStation Plus") && !gameGroup.Any(g => g.Source?.ToString() == "PlayStation") && alreadyImportedGame.Source.ToString() != "PlayStation Plus")
+        {
+          alreadyImportedGame.SourceId = psnLibrary.PlayniteApi.Database.Sources.Add("PlayStation Plus").Id;
+          return true;
+        }
+      }
+      else if (alreadyImportedGame.Source.ToString() == "PlayStation Plus")
+      {
+        alreadyImportedGame.SourceId = psnLibrary.PlayniteApi.Database.Sources.Add("PlayStation").Id;
+        return true;
+      }
+      return false;
+    }
+
+    private static void setSource(PSNLibrary psnLibrary, IGrouping<string, GameMetadata> gameGroup, GameMetadata newGame)
+    {
+      if (psnLibrary.SettingsViewModel.Settings.PlusSource && gameGroup.Any(g => g.Source?.ToString() == "PlayStation Plus") && !gameGroup.Any(g => g.Source?.ToString() == "PlayStation"))
+      {
+        newGame.Source = new MetadataNameProperty("PlayStation Plus");
+      }
+      else
+      {
+        newGame.Source = new MetadataNameProperty("PlayStation");
       }
     }
   }

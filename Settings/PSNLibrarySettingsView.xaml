@@ -122,6 +122,10 @@
                           IsChecked="{Binding Settings.NoTags}"
                           Content="Don't set tags when adding the game (so metadata can fill in tags instead)"
                       Margin="0,4,0,0"/>
+        <CheckBox Name="CheckUpdatePlusSource"
+                          IsChecked="{Binding Settings.PlusSource}"
+                          Content="Set a separate source for PlayStation Plus games"
+                      Margin="0,4,0,0"/>
       </StackPanel>
 
       <StackPanel Margin="0,20,0,0">
