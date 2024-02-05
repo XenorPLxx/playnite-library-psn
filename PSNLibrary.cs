@@ -101,6 +101,15 @@ namespace PSNLibrary
       return newlyImportedGames;
     }
 
+    public override IEnumerable<InstallController> GetInstallActions(GetInstallActionsArgs args)
+    {
+      if (args.Game.PluginId != Id)
+      {
+        yield break;
+      }
+      PlayniteApi.Dialogs.ShowMessage("This will NOT work.\n\r\n\rInstalling PlayStation games from the PSN library plugin is not supported. It is not possible to play PlayStation games this way; the PSN plugin is designed as a library management tool only.\n\r\n\rPlay this game via a console or an emulator instead.");
+    }
+
     public override ISettings GetSettings(bool firstRunSettings)
     {
       return SettingsViewModel;
