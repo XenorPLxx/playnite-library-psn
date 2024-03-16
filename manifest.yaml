@@ -1,5 +1,11 @@
 AddonId: PlayStationLibrary_Builtin
 Packages:
+  - Version: 2.32
+    RequiredApiVersion: 6.9.0
+    ReleaseDate: 2024-03-16
+    PackageUrl: https://github.com/XenorPLxx/playnite-library-psn/releases/download/2.31/PlayStationLibrary_Builtin_2_32.pext
+    Changelog:
+      - Covers edge case of null source when assigning source to a game
   - Version: 2.31
     RequiredApiVersion: 6.9.0
     ReleaseDate: 2024-02-05
