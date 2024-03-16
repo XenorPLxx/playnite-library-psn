@@ -168,17 +168,22 @@ namespace PSNLibrary.Services
     {
       if (psnLibrary.SettingsViewModel.Settings.PlusSource)
       {        
-        if (gameGroup.Any(g => g.Source?.ToString() == "PlayStation") && alreadyImportedGame.Source.ToString() == "PlayStation Plus")
+        if (gameGroup.Any(g => g.Source?.ToString() == "PlayStation") && (alreadyImportedGame.Source?.ToString() == "PlayStation Plus" || alreadyImportedGame.Source == null))
         {
           alreadyImportedGame.SourceId = psnLibrary.PlayniteApi.Database.Sources.Add("PlayStation").Id;
           return true;
-        } else if (gameGroup.Any(g => g.Source?.ToString() == "PlayStation Plus") && !gameGroup.Any(g => g.Source?.ToString() == "PlayStation") && alreadyImportedGame.Source.ToString() != "PlayStation Plus")
+        } else if (gameGroup.Any(g => g.Source?.ToString() == "PlayStation Plus") && !gameGroup.Any(g => g.Source?.ToString() == "PlayStation") && (alreadyImportedGame.Source?.ToString() != "PlayStation Plus" || alreadyImportedGame.Source == null))
         {
           alreadyImportedGame.SourceId = psnLibrary.PlayniteApi.Database.Sources.Add("PlayStation Plus").Id;
           return true;
         }
       }
-      else if (alreadyImportedGame.Source.ToString() == "PlayStation Plus")
+      else if (alreadyImportedGame.Source?.ToString() == "PlayStation Plus")
+      {
+        alreadyImportedGame.SourceId = psnLibrary.PlayniteApi.Database.Sources.Add("PlayStation").Id;
+        return true;
+      }
+      else if (alreadyImportedGame.Source == null)
       {
         alreadyImportedGame.SourceId = psnLibrary.PlayniteApi.Database.Sources.Add("PlayStation").Id;
         return true;
