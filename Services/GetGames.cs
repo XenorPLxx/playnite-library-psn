@@ -91,6 +91,8 @@ namespace PSNLibrary.Services
         var legacyGames = false;
 
         newGame.Platforms = new HashSet<MetadataProperty> { };
+
+        // TODO: make it a separate method so it can fail/return fast if that string/collection is null/empty
         var trophyPlatforms = title.trophyTitlePlatform?.Split(',');
 
         if (trophyPlatforms?.Contains("PSP") == true && psnLibrary.SettingsViewModel.Settings.PSP)
