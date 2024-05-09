@@ -142,6 +142,10 @@
                           IsChecked="{Binding Settings.PSVITA}"
                           Content="PSVITA"
                       Margin="0,4,0,0"/>
+        <CheckBox Name="CheckPSNDownloadOC"
+                          IsChecked="{Binding Settings.PC}"
+                          Content="PC"
+                      Margin="0,4,0,0"/>
       </StackPanel>
     </StackPanel>
 

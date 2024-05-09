@@ -91,20 +91,26 @@ namespace PSNLibrary.Services
         var legacyGames = false;
 
         newGame.Platforms = new HashSet<MetadataProperty> { };
+        var trophyPlatforms = title.trophyTitlePlatform?.Split(',');
 
-        if (title.trophyTitlePlatform?.Contains("PSP") == true && psnLibrary.SettingsViewModel.Settings.PSP)
+        if (trophyPlatforms?.Contains("PSP") == true && psnLibrary.SettingsViewModel.Settings.PSP)
         {
           newGame.Platforms.Add(new MetadataSpecProperty("sony_psp"));
           legacyGames = true;
         }
-        else if (title.trophyTitlePlatform?.Contains("PSVITA") == true && psnLibrary.SettingsViewModel.Settings.PSVITA)
+        if (trophyPlatforms?.Contains("PSVITA") == true && psnLibrary.SettingsViewModel.Settings.PSVITA)
         {
           newGame.Platforms.Add(new MetadataSpecProperty("sony_vita"));
           legacyGames = true;
         }
-        else if (title.trophyTitlePlatform?.Contains("PS3") == true && psnLibrary.SettingsViewModel.Settings.PS3)
+        if (trophyPlatforms?.Contains("PS3") == true && psnLibrary.SettingsViewModel.Settings.PS3)
         {
           newGame.Platforms.Add(new MetadataSpecProperty("sony_playstation3"));
+          legacyGames = true;
+        }
+        if (trophyPlatforms?.Contains("PSPC") == true && psnLibrary.SettingsViewModel.Settings.PC)
+        {
+          newGame.Platforms.Add(new MetadataSpecProperty("pc_windows"));
           legacyGames = true;
         }
 
