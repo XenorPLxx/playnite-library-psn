@@ -1,5 +1,11 @@
 AddonId: PlayStationLibrary_Builtin
 Packages:
+  - Version: 2.33
+    RequiredApiVersion: 6.9.0
+    ReleaseDate: 2024-06-09
+    PackageUrl: https://github.com/XenorPLxx/playnite-library-psn/releases/download/2.33/PlayStationLibrary_Builtin_2_33.pext
+    Changelog:
+      - Adds trophy based PC import with on/off checkbox in the settings
   - Version: 2.32
     RequiredApiVersion: 6.9.0
     ReleaseDate: 2024-03-16
