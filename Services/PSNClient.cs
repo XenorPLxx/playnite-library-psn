@@ -275,6 +275,7 @@ namespace PSNLibrary.Services
       using (var handler = new HttpClientHandler() { CookieContainer = cookieContainer })
       using (var httpClient = new HttpClient(handler))
       {
+        httpClient.DefaultRequestHeaders.TryAddWithoutValidation("x-apollo-operation-name", "pn_psn");
         var resp = httpClient.GetAsync(playedListUrl).GetAwaiter().GetResult();
         var strResponse = await resp.Content.ReadAsStringAsync();
         var titles_part = Serialization.FromJson<PlayedTitles>(strResponse);
@@ -299,6 +300,7 @@ namespace PSNLibrary.Services
         do
         {
           object[] args = { offset, pageRequestLimit };
+          httpClient.DefaultRequestHeaders.TryAddWithoutValidation("x-apollo-operation-name", "pn_psn");
           var resp = httpClient.GetAsync(gameListUrl.Format(offset + pageRequestLimit, pageRequestLimit)).GetAwaiter().GetResult();
           var strResponse = await resp.Content.ReadAsStringAsync();
           var titles_part = Serialization.FromJson<AccountTitles>(strResponse);
@@ -430,7 +432,7 @@ namespace PSNLibrary.Services
         using (var handler = new HttpClientHandler() { CookieContainer = cookieContainer })
         using (var httpClient = new HttpClient(handler))
         {
-
+          httpClient.DefaultRequestHeaders.TryAddWithoutValidation("x-apollo-operation-name", "pn_psn");
           var resp = httpClient.GetAsync(gameListUrl.Format(0, 24)).GetAwaiter().GetResult();
           var strResponse = await resp.Content.ReadAsStringAsync();
           if (Serialization.TryFromJson<AccountTitlesErrorResponse>(strResponse, out var error) && error.data.purchasedTitlesRetrieve == null)
