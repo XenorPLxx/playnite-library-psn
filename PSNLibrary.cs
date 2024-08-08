@@ -39,6 +39,13 @@ namespace PSNLibrary
         HasCustomizedGameImport = true,
         HasSettings = true
       };
+      PlayniteApi.UriHandler.RegisterSource("redirect", (args) =>
+      {
+      //https://ca.account.sony.com/api/authz/v3/oauth/authorize?access_type=offline&client_id=09515159-7237-4370-9b40-3806e67c0891&redirect_uri=com.scee.psxandroid.scecompcall%3A%2F%2Fredirect&response_type=code&scope=psn%3Amobile.v2.core%20psn%3Aclientapp
+        logger.Debug(args.ToString());
+        // Code to be executed
+        // Use args.Arguments to access URL arguments
+      });
     }
 
     // Refactorable

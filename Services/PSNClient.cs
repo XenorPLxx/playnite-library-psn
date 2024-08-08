@@ -17,6 +17,7 @@ using System.Net;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Net.Http.Headers;
 using System.Security;
+using System.Runtime.ConstrainedExecution;
 
 namespace PSNLibrary.Services
 {
@@ -33,7 +34,8 @@ namespace PSNLibrary.Services
     private readonly PSNLibrary psnLibrary;
     private readonly string tokenPath;
     private const int pageRequestLimit = 100;
-    private const string loginUrl = @"https://web.np.playstation.com/api/session/v1/signin?redirect_uri=https://io.playstation.com/central/auth/login%3FpostSignInURL=https://www.playstation.com/home%26cancelURL=https://www.playstation.com/home&smcid=web:pdc";
+    private const string loginUrl = @"https://web.np.playstation.com/api/session/v1//signin?redirect_uri=https%3A%2F%2Fio.playstation.com%2Fcentral%2Fauth%2Flogin%3Flocale%3Dpl_PL%26postSignInURL%3Dplaynite%3A%2F%2Fpsn%26cancelURL%3Dhttps%253A%252F%252Fwww.playstation.com%252Fpl-pl%252F&smcid=web%3Apdc";
+    //private const string loginUrl = @"https://web.np.playstation.com/api/session/v1/signin?redirect_uri=https://io.playstation.com/central/auth/login%3FpostSignInURL=https://www.playstation.com/home%26cancelURL=https://www.playstation.com/home&smcid=web:pdc";
     private const string gameListUrl = "https://web.np.playstation.com/api/graphql/v1/op?operationName=getPurchasedGameList&variables={{\"isActive\":true,\"platform\":[\"ps3\",\"ps4\",\"ps5\"],\"start\":{0},\"size\":{1},\"subscriptionService\":\"NONE\"}}&extensions={{\"persistedQuery\":{{\"version\":1,\"sha256Hash\":\"2c045408b0a4d0264bb5a3edfed4efd49fb4749cf8d216be9043768adff905e2\"}}}}";
     private const string playedListUrl = "https://web.np.playstation.com/api/graphql/v1/op?operationName=getUserGameList&variables=%7B%22limit%22%3A100%2C%22categories%22%3A%22ps4_game%2Cps5_native_game%22%7D&extensions=%7B%22persistedQuery%22%3A%7B%22version%22%3A1%2C%22sha256Hash%22%3A%22e780a6d8b921ef0c59ec01ea5c5255671272ca0d819edb61320914cf7a78b3ae%22%7D%7D";
     private const string mobileCodeUrl = "https://ca.account.sony.com/api/authz/v3/oauth/authorize?access_type=offline&client_id=09515159-7237-4370-9b40-3806e67c0891&redirect_uri=com.scee.psxandroid.scecompcall%3A%2F%2Fredirect&response_type=code&scope=psn%3Amobile.v2.core%20psn%3Aclientapp";
@@ -62,25 +64,27 @@ namespace PSNLibrary.Services
       var webViewSettings = new WebViewSettings();
       webViewSettings.WindowHeight = 700;
       webViewSettings.WindowWidth = 580;
-      webViewSettings.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36";
+      //webViewSettings.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:93.0) Gecko/20100101 Firefox/93.0";
       using (var view = api.WebViews.CreateView(webViewSettings))
       {
         view.LoadingChanged += (s, e) =>
         {
           var address = view.GetCurrentAddress();
-          if (address.StartsWith(@"https://www.playstation.com/"))
-          {
-            loggedIn = true;
-            view.Close();
-          }
+          //if (address.StartsWith(@"https://www.playstation.com/"))
+          //{
+          //  loggedIn = true;
+          //  view.Close();
+          //}
         };
 
         view.DeleteDomainCookies(".sony.com");
         view.DeleteDomainCookies(".ca.account.sony.com");
         view.DeleteDomainCookies("ca.account.sony.com");
+        view.DeleteDomainCookies("my.account.sony.com");
         view.DeleteDomainCookies(".playstation.com");
         view.DeleteDomainCookies("io.playstation.com");
         view.Navigate(loginUrl);
+        //view.Navigate(mobileCodeUrl);
         view.OpenDialog();
       }
 
