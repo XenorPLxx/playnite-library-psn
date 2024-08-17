@@ -6,3 +6,10 @@
 ## About
 
 Current version of PSN extension for Playnite. Work based on https://github.com/JosefNemec/PlayniteExtensions/.
+
+## Common problems
+
+### HTTP Status 429 – Too Many Requests 
+
+- https://github.com/XenorPLxx/playnite-library-psn/issues/5#issuecomment-2294616994 - solution by KZeni
+- https://github.com/XenorPLxx/playnite-library-psn/issues/22#issuecomment-2227230237 - solution by pkluver944
