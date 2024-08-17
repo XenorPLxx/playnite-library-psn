@@ -5,7 +5,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:sys="clr-namespace:System;assembly=mscorlib"
              mc:Ignorable="d"
-             d:DesignHeight="400" d:DesignWidth="600">
+             d:DesignHeight="800" d:DesignWidth="600">
 
   <UserControl.Resources>
     <sys:Boolean x:Key="True">True</sys:Boolean>
@@ -14,162 +14,171 @@
 
   <!--<TextBlock VerticalAlignment="Center" HorizontalAlignment="Center"
                Text="PSN integration is currently broken and not supported." />-->
+  <ScrollViewer>
+    <StackPanel Margin="20">
+      <StackPanel DockPanel.Dock="Top" Margin="0,0,0,16"
+                      IsEnabled="{Binding IsChecked, ElementName=CheckPSNConnectAccount}">
 
-  <StackPanel Margin="20">
-    <StackPanel DockPanel.Dock="Top" Margin="0,0,0,16"
-                    IsEnabled="{Binding IsChecked, ElementName=CheckPSNConnectAccount}">
+        <TextBlock TextWrapping="Wrap" Margin="0,0,0,0" FontSize="16">
+          <TextBlock.Text>
+            Authentication
+          </TextBlock.Text>
+        </TextBlock>
+        <TextBlock TextWrapping="Wrap" Margin="0,8,0,0">
+                  <Run Text="1. Authenticate at"/>
+                  <Hyperlink
+                      NavigateUri="https://www.playstation.com/"
+                      RequestNavigate="Hyperlink_RequestNavigate">
+                      https://www.playstation.com
+                  </Hyperlink><!--
+                  --><Run Text=". Make sure to click 'Trust this Browser'."/>
+                  <LineBreak/>
+                  <Run Text="2. Go to"/>
+                  <Hyperlink
+                      NavigateUri="https://ca.account.sony.com/api/v1/ssocookie"
+                      RequestNavigate="Hyperlink_RequestNavigate">
+                      https://ca.account.sony.com/api/v1/ssocookie
+                  </Hyperlink><!--
+                  --><Run Text="."/>
+                  <LineBreak/>
+                  <Run Text="3. You'll see `{&quot;npsso&quot;:&quot;xxx&quot;}`. Copy the 'xxx' part to the text box below."/>
+                  <LineBreak/>
+                  <Run Text="4. Click 'Check authentication'."/>
+                  <LineBreak/>
+                  <Run Text="INFO: If you encounter errors like 'HTTP Status 429 – Too Many Requests', check out"/>
+                  <Hyperlink
+                      NavigateUri="https://github.com/XenorPLxx/playnite-library-psn?tab=readme-ov-file#common-problems"
+                      RequestNavigate="Hyperlink_RequestNavigate">
+                      common problems and solutions
+                  </Hyperlink><!--
+                  --><Run Text="."/>
+        </TextBlock>
 
-      <TextBlock TextWrapping="Wrap" Margin="0,0,0,0" FontSize="16">
-        <TextBlock.Text>
-          Authentication
-        </TextBlock.Text>
-      </TextBlock>
-      <TextBlock TextWrapping="Wrap" Margin="0,8,0,0">
-                <Run Text="1. Authenticate at"/>
-                <Hyperlink
-                    NavigateUri="https://www.playstation.com/"
-                    RequestNavigate="Hyperlink_RequestNavigate">
-                    https://www.playstation.com
-                </Hyperlink><!--
-                --><Run Text=". Make sure to click 'Trust this Browser'."/>
-                <LineBreak/>
-                <Run Text="2. Go to"/>
-                <Hyperlink
-                    NavigateUri="https://ca.account.sony.com/api/v1/ssocookie"
-                    RequestNavigate="Hyperlink_RequestNavigate">
-                    https://ca.account.sony.com/api/v1/ssocookie
-                </Hyperlink><!--
-                --><Run Text="."/>
-                <LineBreak/>
-                <Run Text="3. You'll see `{&quot;npsso&quot;:&quot;xxx&quot;}`. Copy the 'xxx' part to the text box below."/>
-                <LineBreak/>
-                <Run Text="4. Click 'Check authentication'."/>
-      </TextBlock>
+        <Label Content="Paste NPSSO value here:" Margin="0,8,0,4"/>
+        <TextBox Name="Npsso" Text="{Binding Settings.Npsso}"></TextBox>
+        <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+          <Button Content="Check Authentication" HorizontalAlignment="Left"                         
+                          Command="{Binding CheckAuthenticationCommand}" Margin="0,0,0,0"/>
+          <TextBlock VerticalAlignment="Center" Margin="10,5,5,5">
+            <TextBlock.Tag>
+              <PriorityBinding>
+                <Binding Path="IsUserLoggedIn" IsAsync="True" />
+                <Binding Source="{x:Null}" />
+              </PriorityBinding>
+            </TextBlock.Tag>
+            <TextBlock.Style>
+              <Style TargetType="TextBlock" BasedOn="{StaticResource BaseTextBlockStyle}">
+                <Style.Triggers>
+                  <Trigger Property="Tag" Value="{StaticResource True}">
+                    <Setter Property="Text" Value="User is authenticated" />
+                  </Trigger>
+                  <Trigger Property="Tag" Value="{StaticResource False}">
+                    <Setter Property="Text" Value="User is not authenticated" />
+                  </Trigger>
+                  <Trigger Property="Tag" Value="{x:Null}">
+                    <Setter Property="Text" Value="Checking authentication..." />
+                  </Trigger>
+                </Style.Triggers>
+              </Style>
+            </TextBlock.Style>
+          </TextBlock>
+        </StackPanel>
 
-      <Label Content="Paste NPSSO value here:" Margin="0,8,0,4"/>
-      <TextBox Name="Npsso" Text="{Binding Settings.Npsso}"></TextBox>
-      <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
-        <Button Content="Check Authentication" HorizontalAlignment="Left"                         
-                        Command="{Binding CheckAuthenticationCommand}" Margin="0,0,0,0"/>
-        <TextBlock VerticalAlignment="Center" Margin="10,5,5,5">
-          <TextBlock.Tag>
-            <PriorityBinding>
-              <Binding Path="IsUserLoggedIn" IsAsync="True" />
-              <Binding Source="{x:Null}" />
-            </PriorityBinding>
-          </TextBlock.Tag>
-          <TextBlock.Style>
-            <Style TargetType="TextBlock" BasedOn="{StaticResource BaseTextBlockStyle}">
-              <Style.Triggers>
-                <Trigger Property="Tag" Value="{StaticResource True}">
-                  <Setter Property="Text" Value="User is authenticated" />
-                </Trigger>
-                <Trigger Property="Tag" Value="{StaticResource False}">
-                  <Setter Property="Text" Value="User is not authenticated" />
-                </Trigger>
-                <Trigger Property="Tag" Value="{x:Null}">
-                  <Setter Property="Text" Value="Checking authentication..." />
-                </Trigger>
-              </Style.Triggers>
-            </Style>
-          </TextBlock.Style>
+
+      </StackPanel>
+
+
+      <StackPanel DockPanel.Dock="Top" Margin="0,0,0,16">
+        <TextBlock TextWrapping="Wrap" Margin="0,0,0,8" FontSize="16">
+          <TextBlock.Text>
+            Settings
+          </TextBlock.Text>
+        </TextBlock>
+
+        <CheckBox Name="CheckPSNConnectAccount"
+                        IsChecked="{Binding Settings.ConnectAccount}"
+                        Content="Connect account"/>
+
+        <CheckBox Name="CheckPSNDownloadImageMetadata"
+                        IsChecked="{Binding Settings.DownloadImageMetadata}"
+                        Content="Download image metadata from PSN"
+                        Margin="0,4,0,0"/>
+
+        <CheckBox Name="CheckPSNMigration"
+                        IsChecked="{Binding Settings.Migration}"
+                        Content="Try to migrate games from the old plugin on the next library update"
+                        Margin="0,4,0,0"/>
+
+        <StackPanel Margin="0,16,0,0">
+          <CheckBox Name="CheckUpdateLastPlayed"
+                        IsChecked="{Binding Settings.LastPlayed}"
+                        Content="Update last played date"
+                        Margin="0,4,0,0"/>
+          <CheckBox Name="CheckUpdatePlaytime"
+                            IsChecked="{Binding Settings.Playtime}"
+                            Content="Update playtime"
+                        Margin="0,4,0,0"/>
+          <CheckBox Name="CheckUpdatePlayCount"
+                            IsChecked="{Binding Settings.PlayCount}"
+                            Content="Update play count"
+                        Margin="0,4,0,0"/>
+          <CheckBox Name="CheckUpdateTags"
+                            IsChecked="{Binding Settings.Tags}"
+                            Content="Update subscription tags"
+                        Margin="0,4,0,0"/>
+          <CheckBox Name="CheckUpdateNoTags"
+                            IsChecked="{Binding Settings.NoTags}"
+                            Content="Don't set tags when adding the game (so metadata can fill in tags instead)"
+                        Margin="0,4,0,0"/>
+          <CheckBox Name="CheckUpdatePlusSource"
+                            IsChecked="{Binding Settings.PlusSource}"
+                            Content="Set a separate source for PlayStation Plus games"
+                        Margin="0,4,0,0"/>
+        </StackPanel>
+
+        <StackPanel Margin="0,20,0,0">
+          <Label Content="Try to download older games from Tophies API (API number 4):"></Label>
+          <CheckBox Name="CheckPSNDownloadPS3"
+                        IsChecked="{Binding Settings.PS3}"
+                        Content="PS3"
+                        Margin="0,4,0,0"/>
+          <CheckBox Name="CheckPSNDownloadPSP"
+                            IsChecked="{Binding Settings.PSP}"
+                            Content="PSP"
+                        Margin="0,4,0,0"/>
+          <CheckBox Name="CheckPSNDownloadPSVITA"
+                            IsChecked="{Binding Settings.PSVITA}"
+                            Content="PSVITA"
+                        Margin="0,4,0,0"/>
+          <CheckBox Name="CheckPSNDownloadOC"
+                            IsChecked="{Binding Settings.PC}"
+                            Content="PC"
+                        Margin="0,4,0,0"/>
+        </StackPanel>
+      </StackPanel>
+
+      <StackPanel DockPanel.Dock="Top" Margin="0,0,0,16"
+                          IsEnabled="{Binding IsChecked, ElementName=CheckPSNConnectAccount}">
+        <TextBlock TextWrapping="Wrap" Margin="0,0,0,0" FontSize="16">
+          <TextBlock.Text>
+            Legacy authentication method
+          </TextBlock.Text>
+        </TextBlock>
+        <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+          <Button Content="Authenticate" HorizontalAlignment="Left"                         
+                          Command="{Binding LoginCommand}" Margin="0,0,0,0"/>
+        </StackPanel>
+        <TextBlock TextWrapping="Wrap" Margin="0,8,0,0">
+                      WARNING: If you encounter an error stating "A connection to the server could not be established.", try checking 
+                  <Hyperlink
+                      NavigateUri="https://github.com/XenorPLxx/playnite-library-psn/issues/5#issuecomment-1305829051"
+                      RequestNavigate="Hyperlink_RequestNavigate">
+                      discussion about the issue
+                  </Hyperlink>
+
         </TextBlock>
       </StackPanel>
-
-
     </StackPanel>
-
-
-    <StackPanel DockPanel.Dock="Top" Margin="0,0,0,16">
-      <TextBlock TextWrapping="Wrap" Margin="0,0,0,8" FontSize="16">
-        <TextBlock.Text>
-          Settings
-        </TextBlock.Text>
-      </TextBlock>
-
-      <CheckBox Name="CheckPSNConnectAccount"
-                      IsChecked="{Binding Settings.ConnectAccount}"
-                      Content="Connect account"/>
-
-      <CheckBox Name="CheckPSNDownloadImageMetadata"
-                      IsChecked="{Binding Settings.DownloadImageMetadata}"
-                      Content="Download image metadata from PSN"
-                      Margin="0,4,0,0"/>
-
-      <CheckBox Name="CheckPSNMigration"
-                      IsChecked="{Binding Settings.Migration}"
-                      Content="Try to migrate games from the old plugin on the next library update"
-                      Margin="0,4,0,0"/>
-
-      <StackPanel Margin="0,16,0,0">
-        <CheckBox Name="CheckUpdateLastPlayed"
-                      IsChecked="{Binding Settings.LastPlayed}"
-                      Content="Update last played date"
-                      Margin="0,4,0,0"/>
-        <CheckBox Name="CheckUpdatePlaytime"
-                          IsChecked="{Binding Settings.Playtime}"
-                          Content="Update playtime"
-                      Margin="0,4,0,0"/>
-        <CheckBox Name="CheckUpdatePlayCount"
-                          IsChecked="{Binding Settings.PlayCount}"
-                          Content="Update play count"
-                      Margin="0,4,0,0"/>
-        <CheckBox Name="CheckUpdateTags"
-                          IsChecked="{Binding Settings.Tags}"
-                          Content="Update subscription tags"
-                      Margin="0,4,0,0"/>
-        <CheckBox Name="CheckUpdateNoTags"
-                          IsChecked="{Binding Settings.NoTags}"
-                          Content="Don't set tags when adding the game (so metadata can fill in tags instead)"
-                      Margin="0,4,0,0"/>
-        <CheckBox Name="CheckUpdatePlusSource"
-                          IsChecked="{Binding Settings.PlusSource}"
-                          Content="Set a separate source for PlayStation Plus games"
-                      Margin="0,4,0,0"/>
-      </StackPanel>
-
-      <StackPanel Margin="0,20,0,0">
-        <Label Content="Try to download older games from Tophies API (API number 4):"></Label>
-        <CheckBox Name="CheckPSNDownloadPS3"
-                      IsChecked="{Binding Settings.PS3}"
-                      Content="PS3"
-                      Margin="0,4,0,0"/>
-        <CheckBox Name="CheckPSNDownloadPSP"
-                          IsChecked="{Binding Settings.PSP}"
-                          Content="PSP"
-                      Margin="0,4,0,0"/>
-        <CheckBox Name="CheckPSNDownloadPSVITA"
-                          IsChecked="{Binding Settings.PSVITA}"
-                          Content="PSVITA"
-                      Margin="0,4,0,0"/>
-        <CheckBox Name="CheckPSNDownloadOC"
-                          IsChecked="{Binding Settings.PC}"
-                          Content="PC"
-                      Margin="0,4,0,0"/>
-      </StackPanel>
-    </StackPanel>
-
-    <StackPanel DockPanel.Dock="Top" Margin="0,0,0,16"
-                        IsEnabled="{Binding IsChecked, ElementName=CheckPSNConnectAccount}">
-      <TextBlock TextWrapping="Wrap" Margin="0,0,0,0" FontSize="16">
-        <TextBlock.Text>
-          Legacy authentication method
-        </TextBlock.Text>
-      </TextBlock>
-      <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
-        <Button Content="Authenticate" HorizontalAlignment="Left"                         
-                        Command="{Binding LoginCommand}" Margin="0,0,0,0"/>
-      </StackPanel>
-      <TextBlock TextWrapping="Wrap" Margin="0,8,0,0">
-                    WARNING: If you encounter an error stating "A connection to the server could not be established.", try checking 
-                <Hyperlink
-                    NavigateUri="https://github.com/XenorPLxx/playnite-library-psn/issues/5#issuecomment-1305829051"
-                    RequestNavigate="Hyperlink_RequestNavigate">
-                    discussion about the issue
-                </Hyperlink>
-
-      </TextBlock>
-    </StackPanel>
-  </StackPanel>
+  </ScrollViewer>
 
 </UserControl>
