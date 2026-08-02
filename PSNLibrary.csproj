@@ -54,8 +54,7 @@
     <Compile Include="Models\PSNModels.cs" />
     <Compile Include="Services\CheckAuthentication.cs" />
     <Compile Include="Services\GetGames.cs" />
-    <Compile Include="Services\ImportGames.cs" />
-    <Compile Include="Services\MigrateGames.cs" />
+    <Compile Include="Services\SyncGames.cs" />
     <Compile Include="Services\ParserSource.cs" />
     <Compile Include="Services\ParserSubscription.cs" />
     <Compile Include="Services\ParserCategory.cs" />
