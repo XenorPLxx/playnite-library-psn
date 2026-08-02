@@ -11,14 +11,16 @@ namespace PSNLibrary
   {
     public bool connectAccount = true;
     public bool downloadImageMetadata = true;
-    public bool lastPlayed = true;
-    public bool playtime = true;
-    public bool playCount = true;
+    // Existing "LastPlayed" settings deserialize into this value. New installs follow Playnite's normal import behavior by default.
+    public bool lastPlayed = false;
+    // Existing "Playtime" settings deserialize into this value. New installs follow Playnite's global policy by default.
+    public bool playtime = false;
+    // Existing "PlayCount" settings deserialize into this value. New installs only sync play count when explicitly requested.
+    public bool playCount = false;
     public bool ps3 = true;
     public bool psp = true;
     public bool psvita = true;
     public bool pc = true;
-    public bool migration = true;
     public bool tags = true;
     public bool noTags = false;
     public bool plusSource = false;
@@ -26,14 +28,16 @@ namespace PSNLibrary
 
     public bool ConnectAccount { get => connectAccount; set => SetValue(ref connectAccount, value); }
     public bool DownloadImageMetadata { get => downloadImageMetadata; set => SetValue(ref downloadImageMetadata, value); }
-    public bool LastPlayed { get => lastPlayed; set => SetValue(ref lastPlayed, value); }
-    public bool Playtime { get => playtime; set => SetValue(ref playtime, value); }
-    public bool PlayCount { get => playCount; set => SetValue(ref playCount, value); }
+    [SerializationPropertyName("LastPlayed")]
+    public bool AlwaysUpdateExistingLastPlayed { get => lastPlayed; set => SetValue(ref lastPlayed, value); }
+    [SerializationPropertyName("Playtime")]
+    public bool AlwaysUpdateExistingPlaytime { get => playtime; set => SetValue(ref playtime, value); }
+    [SerializationPropertyName("PlayCount")]
+    public bool AlwaysUpdateExistingPlayCount { get => playCount; set => SetValue(ref playCount, value); }
     public bool PS3 { get => ps3; set => SetValue(ref ps3, value); }
     public bool PSP { get => psp; set => SetValue(ref psp, value); }
     public bool PSVITA { get => psvita; set => SetValue(ref psvita, value); }
     public bool PC { get => pc; set => SetValue(ref pc, value); }
-    public bool Migration { get => migration; set => SetValue(ref migration, value); }
     public bool Tags { get => tags; set => SetValue(ref tags, value); }
     public bool NoTags { get => noTags; set => SetValue(ref noTags, value); }
     public bool PlusSource { get => plusSource; set => SetValue(ref plusSource, value); }

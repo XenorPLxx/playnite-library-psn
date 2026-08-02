@@ -104,24 +104,34 @@
                         Content="Download image metadata from PSN"
                         Margin="0,4,0,0"/>
 
-        <CheckBox Name="CheckPSNMigration"
-                        IsChecked="{Binding Settings.Migration}"
-                        Content="Try to migrate games from the old plugin on the next library update"
+        <StackPanel Margin="0,16,0,0">
+          <TextBlock TextWrapping="Wrap" Margin="0,0,0,4" FontSize="16">
+            <TextBlock.Text>
+              Play activity data
+            </TextBlock.Text>
+          </TextBlock>
+          <TextBlock TextWrapping="Wrap" Margin="0,0,0,4"
+                     Text="Always update these fields for existing games (overrides Playnite's import behavior):"/>
+          <CheckBox Name="CheckAlwaysUpdateExistingLastPlayed"
+                        IsChecked="{Binding Settings.AlwaysUpdateExistingLastPlayed}"
+                        Content="Last played date"
                         Margin="0,4,0,0"/>
+          <CheckBox Name="CheckAlwaysUpdateExistingPlaytime"
+                            IsChecked="{Binding Settings.AlwaysUpdateExistingPlaytime}"
+                            Content="Playtime"
+                        Margin="0,4,0,0"/>
+          <CheckBox Name="CheckAlwaysUpdateExistingPlayCount"
+                            IsChecked="{Binding Settings.AlwaysUpdateExistingPlayCount}"
+                            Content="Play count"
+                        Margin="0,4,0,0"/>
+        </StackPanel>
 
         <StackPanel Margin="0,16,0,0">
-          <CheckBox Name="CheckUpdateLastPlayed"
-                        IsChecked="{Binding Settings.LastPlayed}"
-                        Content="Update last played date"
-                        Margin="0,4,0,0"/>
-          <CheckBox Name="CheckUpdatePlaytime"
-                            IsChecked="{Binding Settings.Playtime}"
-                            Content="Update playtime"
-                        Margin="0,4,0,0"/>
-          <CheckBox Name="CheckUpdatePlayCount"
-                            IsChecked="{Binding Settings.PlayCount}"
-                            Content="Update play count"
-                        Margin="0,4,0,0"/>
+          <TextBlock TextWrapping="Wrap" Margin="0,0,0,4" FontSize="16">
+            <TextBlock.Text>
+              PlayStation Plus metadata
+            </TextBlock.Text>
+          </TextBlock>
           <CheckBox Name="CheckUpdateTags"
                             IsChecked="{Binding Settings.Tags}"
                             Content="Update subscription tags"
