@@ -1,5 +1,11 @@
 AddonId: PlayStationLibrary_Builtin
 Packages:
+  - Version: 2.37
+    RequiredApiVersion: 6.12.0
+    ReleaseDate: 2026-08-02
+    PackageUrl: https://github.com/XenorPLxx/playnite-library-psn/releases/download/2.37/PlayStationLibrary_Builtin_2_37.pext
+    Changelog:
+      - Migrates plugin to GetGames for compatibility with Import Analyzer
   - Version: 2.36
     RequiredApiVersion: 6.12.0
     ReleaseDate: 2025-07-20
