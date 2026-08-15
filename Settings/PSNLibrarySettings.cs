@@ -105,6 +105,13 @@ namespace PSNLibrary
       // Executed before EndEdit is called and EndEdit is not called if false is returned.
       // List of errors is presented to user if verification fails.
       errors = new List<string>();
+      if (!PSNClient.TryGetNpsso(Settings.Npsso, out var npsso, out var error))
+      {
+        errors.Add(error);
+        return false;
+      }
+
+      Settings.Npsso = npsso;
       return true;
     }
 
@@ -128,6 +135,13 @@ namespace PSNLibrary
 
     private void CheckAuthentication()
     {
+      if (!PSNClient.TryGetNpsso(Settings.Npsso, out var npsso, out var error))
+      {
+        plugin.PlayniteApi.Dialogs.ShowMessage(error, "Invalid NPSSO");
+        return;
+      }
+
+      Settings.Npsso = npsso;
       clientApi.ClearAuthentication();
       OnPropertyChanged(nameof(IsUserLoggedIn));
     }

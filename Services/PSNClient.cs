@@ -15,6 +15,7 @@ using System.Net;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Net.Http.Headers;
 using System.Security.Cryptography;
+using System.Web.Script.Serialization;
 
 namespace PSNLibrary.Services
 {
@@ -54,6 +55,41 @@ namespace PSNLibrary.Services
       api = psnLibrary.PlayniteApi;
       cookiesPath = Path.Combine(psnLibrary.GetPluginUserDataPath(), "cookies.dat");
       legacyTokenPath = Path.Combine(psnLibrary.GetPluginUserDataPath(), "token.json");
+    }
+
+    public static bool TryGetNpsso(string value, out string npsso, out string error)
+    {
+      npsso = string.Empty;
+      error = null;
+      var trimmedValue = value?.Trim();
+      if (string.IsNullOrEmpty(trimmedValue))
+      {
+        return true;
+      }
+
+      if (!trimmedValue.StartsWith("{", StringComparison.Ordinal))
+      {
+        npsso = trimmedValue;
+        return true;
+      }
+
+      try
+      {
+        var cookie = new JavaScriptSerializer().DeserializeObject(trimmedValue) as Dictionary<string, object>;
+        if (cookie == null || !cookie.TryGetValue("npsso", out var npssoValue) || !(npssoValue is string cookieNpsso) || string.IsNullOrWhiteSpace(cookieNpsso))
+        {
+          error = "The ssocookie JSON must contain a non-empty string property named 'npsso'.";
+          return false;
+        }
+
+        npsso = cookieNpsso.Trim();
+        return true;
+      }
+      catch (ArgumentException)
+      {
+        error = "The NPSSO input is not valid JSON. Paste the raw NPSSO value or a JSON object such as {\"npsso\":\"...\"}.";
+        return false;
+      }
     }
 
     private bool DumpCookies(IEnumerable<Playnite.SDK.HttpCookie> cookies)
@@ -540,7 +576,12 @@ namespace PSNLibrary.Services
 
     private bool TryRefreshCookies()
     {
-      var npsso = psnLibrary.SettingsViewModel.Settings.Npsso;
+      if (!TryGetNpsso(psnLibrary.SettingsViewModel.Settings.Npsso, out var npsso, out var error))
+      {
+        logger.Warn($"The configured NPSSO input is invalid: {error}");
+        return false;
+      }
+
       if (string.IsNullOrWhiteSpace(npsso))
       {
         return false;

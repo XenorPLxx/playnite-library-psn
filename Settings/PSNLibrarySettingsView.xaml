@@ -33,9 +33,9 @@
           <Hyperlink NavigateUri="https://ca.account.sony.com/api/v1/ssocookie" RequestNavigate="Hyperlink_RequestNavigate">https://ca.account.sony.com/api/v1/ssocookie</Hyperlink>
           <Run Text="."/>
           <LineBreak/>
-          <Run Text="3. Copy the value from `{&quot;npsso&quot;:&quot;xxx&quot;}` below, then click 'Check authentication'."/>
+          <Run Text="3. Copy either the NPSSO value or the complete `{&quot;npsso&quot;:&quot;xxx&quot;}` response, then click 'Check authentication'."/>
         </TextBlock>
-        <Label Content="Paste NPSSO value here:" Margin="0,8,0,4"/>
+        <Label Content="Paste NPSSO value or ssocookie JSON here:" Margin="0,8,0,4"/>
         <TextBox Name="Npsso" Text="{Binding Settings.Npsso}"/>
         <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
           <Button Content="Check authentication" HorizontalAlignment="Left"
