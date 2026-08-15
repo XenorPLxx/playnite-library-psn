@@ -1,5 +1,14 @@
 AddonId: PlayStationLibrary_Builtin
 Packages:
+  - Version: 2.38
+    RequiredApiVersion: 6.12.0
+    ReleaseDate: 2026-08-15
+    PackageUrl: https://github.com/XenorPLxx/playnite-library-psn/releases/download/2.38/PlayStationLibrary_Builtin_2_38.pext
+    Changelog:
+      - Improves the NPSSO authentication flow and saved-session handling.
+      - Accepts either a raw NPSSO token or the complete ssocookie JSON response.
+      - Improves library synchronization reliability and cancellation.
+      - Moves PlayStation Store metadata support to Universal PSN Metadata.
   - Version: 2.37
     RequiredApiVersion: 6.12.0
     ReleaseDate: 2026-08-02
