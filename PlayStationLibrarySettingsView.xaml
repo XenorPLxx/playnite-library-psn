@@ -1,0 +1,106 @@
+<UserControl x:Class="PlayStationLibrary.PlayStationLibrarySettingsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:local="clr-namespace:PlayStationLibrary"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:p="clr-namespace:Playnite"
+             mc:Ignorable="d"
+             d:DataContext="{d:DesignInstance Type=local:PlayStationLibrarySettingsHandler}">
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
+    </UserControl.Resources>
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="20">
+            <TextBlock FontSize="16" Text="{p:LocalizedString {x:Static p:LocId.playstation_library_label}}" />
+            <CheckBox Margin="0,12,0,0"
+                      Content="{p:LocalizedString {x:Static p:LocId.settings_connect_account}}"
+                      IsChecked="{Binding Settings.ConnectAccount}" />
+            <StackPanel Margin="0,16,0,0"
+                        IsEnabled="{Binding Settings.ConnectAccount}">
+                <TextBlock FontSize="14" Text="{p:LocalizedString {x:Static p:LocId.playstation_authentication_label}}" />
+                <TextBlock Margin="0,8,0,0" TextWrapping="Wrap">
+                    <Run Text="{p:LocalizedString {x:Static p:LocId.playstation_auth_step_browser}}" />
+                    <LineBreak />
+                    <Run Text="{p:LocalizedString {x:Static p:LocId.playstation_auth_step_open}}" />
+                    <Hyperlink NavigateUri="https://ca.account.sony.com/api/v1/ssocookie"
+                               RequestNavigate="Hyperlink_RequestNavigate">https://ca.account.sony.com/api/v1/ssocookie</Hyperlink>
+                    <Run Text="{p:LocalizedString {x:Static p:LocId.playstation_auth_step_open_suffix}}" />
+                    <LineBreak />
+                    <Run Text="{p:LocalizedString {x:Static p:LocId.playstation_auth_step_paste}}" />
+                </TextBlock>
+                <Label Margin="0,12,0,4" Content="{p:LocalizedString {x:Static p:LocId.playstation_npsso_label}}" />
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <!-- The NPSSO grants full access to the account, so it is masked like a password
+                         unless the user deliberately reveals it. -->
+                    <PasswordBox x:Name="NpssoPasswordBox"
+                                 Grid.Column="0"
+                                 VerticalContentAlignment="Center"
+                                 PasswordChanged="NpssoPasswordBox_PasswordChanged">
+                        <PasswordBox.Style>
+                            <Style TargetType="PasswordBox">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsChecked, ElementName=RevealNpsso}" Value="True">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </PasswordBox.Style>
+                    </PasswordBox>
+                    <TextBox Grid.Column="0"
+                             VerticalContentAlignment="Center"
+                             Visibility="{Binding IsChecked, ElementName=RevealNpsso, Converter={StaticResource BoolToVisibility}}"
+                             Text="{Binding Settings.Npsso, UpdateSourceTrigger=PropertyChanged}" />
+                    <ToggleButton x:Name="RevealNpsso"
+                                  Grid.Column="1"
+                                  Margin="6,0,0,0"
+                                  Padding="8,0"
+                                  Content="&#128065;"
+                                  ToolTip="{p:LocalizedString {x:Static p:LocId.playstation_npsso_toggle_tooltip}}"
+                                  Checked="RevealNpsso_Toggled"
+                                  Unchecked="RevealNpsso_Toggled" />
+                </Grid>
+                <StackPanel Margin="0,10,0,0" Orientation="Horizontal">
+                    <Button Command="{Binding CheckAuthenticationCommand}"
+                            Content="{p:LocalizedString {x:Static p:LocId.authenticate_label}}" />
+                    <TextBlock Margin="12,4,0,0" Text="{Binding AuthenticationStatus}" />
+                </StackPanel>
+
+                <TextBlock Margin="0,20,0,0" FontSize="14" Text="{p:LocalizedString {x:Static p:LocId.playstation_region_label}}" />
+                <TextBlock Margin="0,4,0,6" TextWrapping="Wrap" Opacity="0.7"
+                           Text="{p:LocalizedString {x:Static p:LocId.playstation_region_description}}" />
+                <ComboBox HorizontalAlignment="Left" MinWidth="320"
+                          ItemsSource="{Binding Locales}"
+                          DisplayMemberPath="DisplayName"
+                          SelectedValuePath="Locale"
+                          SelectedValue="{Binding Settings.Locale}" />
+
+                <TextBlock Margin="0,20,0,0" FontSize="14" Text="{p:LocalizedString {x:Static p:LocId.playstation_legacy_platforms_label}}" />
+                <TextBlock Margin="0,4,0,0" TextWrapping="Wrap" Opacity="0.7"
+                           Text="{p:LocalizedString {x:Static p:LocId.playstation_legacy_platforms_description}}" />
+                <CheckBox Margin="0,8,0,0" Content="{p:LocalizedString {x:Static p:LocId.playstation_platform_ps3}}" IsChecked="{Binding Settings.ImportPs3}" />
+                <CheckBox Margin="0,4,0,0" Content="{p:LocalizedString {x:Static p:LocId.playstation_platform_psp}}" IsChecked="{Binding Settings.ImportPsp}" />
+                <CheckBox Margin="0,4,0,0" Content="{p:LocalizedString {x:Static p:LocId.playstation_platform_psvita}}" IsChecked="{Binding Settings.ImportPsVita}" />
+
+                <TextBlock Margin="0,20,0,0" FontSize="14" Text="{p:LocalizedString {x:Static p:LocId.playstation_trophy_only_label}}" />
+                <CheckBox Margin="0,8,0,0"
+                          Content="{p:LocalizedString {x:Static p:LocId.playstation_trophy_only_checkbox}}"
+                          IsChecked="{Binding Settings.ImportTrophyOnlyGames}" />
+                <TextBlock Margin="0,4,0,0" TextWrapping="Wrap" Opacity="0.7"
+                           Text="{p:LocalizedString {x:Static p:LocId.playstation_trophy_only_description}}" />
+
+                <TextBlock Margin="0,20,0,0" FontSize="14" Text="{p:LocalizedString {x:Static p:LocId.playstation_plus_label}}" />
+                <CheckBox Margin="0,8,0,0"
+                          Content="{p:LocalizedString {x:Static p:LocId.playstation_plus_tag_checkbox}}"
+                          IsChecked="{Binding Settings.ImportPlusTag}" />
+                <CheckBox Margin="0,4,0,0"
+                          Content="{p:LocalizedString {x:Static p:LocId.playstation_plus_source_checkbox}}"
+                          IsChecked="{Binding Settings.UsePlusSource}" />
+            </StackPanel>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

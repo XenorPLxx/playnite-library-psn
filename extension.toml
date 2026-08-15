@@ -1,0 +1,23 @@
+﻿id = "Xenor.PlayStationLibrary"
+name = "PlayStation Library Integration"
+author = "Xenor"
+version = "3.0"
+module = "PlayStationLibrary.dll"
+icon = "plugin_icon.png"
+
+# Icon used when referencing related launcher app
+#client_app_icon = "client_app_icon.png"
+
+# Icon used when referencing game library from this extension
+library_icon = "plugin_icon.png"
+
+# Troubleshooting link to be shown on addons view
+#help_link = ""
+
+# Source code link to be shown on addons view
+source_link = "https://github.com/XenorPLxx/playnite-library-psn"
+
+# Sponsor links to be shown on addons view
+#[[sponsor_links]]
+#name = "Ko-fi"
+#url = "https://ko-fi.com/"
