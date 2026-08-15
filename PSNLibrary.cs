@@ -7,6 +7,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Threading;
 using System.Windows.Controls;
 
 namespace PSNLibrary
@@ -58,29 +59,25 @@ namespace PSNLibrary
         var gamesFromApi = new List<GameMetadata>();
 
         // Check for authentication
-        if (Services.CheckAuthentication.call(this, psnClient))
-        { 
+        if (Services.CheckAuthentication.call(this, psnClient, args.CancelToken))
+        {
           // Start loading games from different APIs
-          gamesFromApi.AddRange(Services.GetGames.LoadAccountGameList(this, psnClient)); // AccountList has the best game names
-          gamesFromApi.AddRange(Services.GetGames.LoadMobilePlayedGameList(this, psnClient));
-          gamesFromApi.AddRange(Services.GetGames.LoadPlayedGameList(this, psnClient));
-
-          if (args.CancelToken.IsCancellationRequested)
-          {
-            return gamesToImport;
-          }
+          gamesFromApi.AddRange(Services.GetGames.LoadAccountGameList(this, psnClient, args.CancelToken)); // AccountList has the best game names
+          gamesFromApi.AddRange(Services.GetGames.LoadMobilePlayedGameList(this, psnClient, args.CancelToken));
+          gamesFromApi.AddRange(Services.GetGames.LoadPlayedGameList(this, psnClient, args.CancelToken));
+          args.CancelToken.ThrowIfCancellationRequested();
 
           // Load games for legacy platforms using trophy list
-          gamesFromApi.AddRange(Services.GetGames.LoadTrophyList(this, psnClient));
-
-          if (args.CancelToken.IsCancellationRequested)
-          {
-            return gamesToImport;
-          }
+          gamesFromApi.AddRange(Services.GetGames.LoadTrophyList(this, psnClient, args.CancelToken));
+          args.CancelToken.ThrowIfCancellationRequested();
 
           // Merge games from different APIs, synchronize PSN-specific fields, and let Playnite import the result.
           gamesToImport = Services.SyncGames.MergeAndSyncExistingGames(this, gamesFromApi);
         }
+      }
+      catch (OperationCanceledException) when (args.CancelToken.IsCancellationRequested)
+      {
+        return gamesToImport;
       }
       catch (Exception e) when (!Debugger.IsAttached)
       {

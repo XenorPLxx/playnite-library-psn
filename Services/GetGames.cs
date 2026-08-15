@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using PSNLibrary.Models;
 
@@ -11,12 +12,16 @@ namespace PSNLibrary.Services
 {
   internal class GetGames
   {
-    public static List<GameMetadata> LoadAccountGameList(PSNLibrary psnLibrary, PSNClient psnClient)
+    public static List<GameMetadata> LoadAccountGameList(PSNLibrary psnLibrary, PSNClient psnClient, CancellationToken cancellationToken = default(CancellationToken))
     {
       try
       {
-        var gamesToParse = psnClient.GetAccountTitles().GetAwaiter().GetResult();
+        var gamesToParse = psnClient.GetAccountTitles(cancellationToken).GetAwaiter().GetResult();
         return ParserGames.call(gamesToParse, psnLibrary);
+      }
+      catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+      {
+        throw;
       }
       catch (Exception e)
       {
@@ -26,12 +31,16 @@ namespace PSNLibrary.Services
       }
     }
 
-    public static List<GameMetadata> LoadPlayedGameList(PSNLibrary psnLibrary, PSNClient psnClient)
+    public static List<GameMetadata> LoadPlayedGameList(PSNLibrary psnLibrary, PSNClient psnClient, CancellationToken cancellationToken = default(CancellationToken))
     {
       try
       {
-        var gamesToParse = psnClient.GetPlayedTitles().GetAwaiter().GetResult();
+        var gamesToParse = psnClient.GetPlayedTitles(cancellationToken).GetAwaiter().GetResult();
         return ParserGames.call(gamesToParse, psnLibrary);
+      }
+      catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+      {
+        throw;
       }
       catch (Exception e)
       {
@@ -41,12 +50,16 @@ namespace PSNLibrary.Services
       }
     }
 
-    public static List<GameMetadata> LoadMobilePlayedGameList(PSNLibrary psnLibrary, PSNClient psnClient)
+    public static List<GameMetadata> LoadMobilePlayedGameList(PSNLibrary psnLibrary, PSNClient psnClient, CancellationToken cancellationToken = default(CancellationToken))
     {
       try
       {
-        var gamesToParse = psnClient.GetPlayedTitlesMobile().GetAwaiter().GetResult();
+        var gamesToParse = psnClient.GetPlayedTitlesMobile(cancellationToken).GetAwaiter().GetResult();
         return ParserGames.call(gamesToParse);
+      }
+      catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+      {
+        throw;
       }
       catch (Exception e)
       {
@@ -56,14 +69,18 @@ namespace PSNLibrary.Services
       }
     }
 
-    public static List<GameMetadata> LoadTrophyList(PSNLibrary psnLibrary, PSNClient psnClient)
+    public static List<GameMetadata> LoadTrophyList(PSNLibrary psnLibrary, PSNClient psnClient, CancellationToken cancellationToken = default(CancellationToken))
     {
       var parsedGames = new List<GameMetadata>();
       var titles = new List<TrophyTitleMobile>();
 
       try
       {
-        titles = psnClient.GetTrohpiesMobile().GetAwaiter().GetResult();
+        titles = psnClient.GetTrohpiesMobile(cancellationToken).GetAwaiter().GetResult();
+      }
+      catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+      {
+        throw;
       }
       catch (Exception e)
       {
@@ -74,6 +91,7 @@ namespace PSNLibrary.Services
 
       foreach (var title in titles)
       {
+        cancellationToken.ThrowIfCancellationRequested();
         var gameName = ParserName.call(title.trophyTitleName);
 
         gameName = gameName.

@@ -8,15 +8,13 @@ using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
-using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Security.Principal;
 using System.Web;
 using System.Net;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Net.Http.Headers;
-using System.Security;
+using System.Security.Cryptography;
 
 namespace PSNLibrary.Services
 {
@@ -28,10 +26,17 @@ namespace PSNLibrary.Services
   public class PSNClient
   {
     private static readonly ILogger logger = LogManager.GetLogger();
+    private static readonly Uri[] cookieUris =
+    {
+      new Uri("https://web.np.playstation.com"),
+      new Uri("https://ca.account.sony.com")
+    };
+    private static readonly byte[] cookieEncryptionEntropy = Encoding.UTF8.GetBytes("PSNLibrary.CookieStore.v1");
     private IPlayniteAPI api;
     private MobileTokens mobileToken;
     private readonly PSNLibrary psnLibrary;
-    private readonly string tokenPath;
+    private readonly string cookiesPath;
+    private readonly string legacyTokenPath;
     private const int pageRequestLimit = 100;
     private const string loginUrl = @"https://web.np.playstation.com/api/session/v1/signin?redirect_uri=https://io.playstation.com/central/auth/login%3FpostSignInURL=https://www.playstation.com/home%26cancelURL=https://www.playstation.com/home&smcid=web:pdc";
     private const string gameListUrl = "https://web.np.playstation.com/api/graphql/v1/op?operationName=getPurchasedGameList&variables={{\"isActive\":true,\"platform\":[\"ps3\",\"ps4\",\"ps5\"],\"start\":{0},\"size\":{1},\"subscriptionService\":\"NONE\"}}&extensions={{\"persistedQuery\":{{\"version\":1,\"sha256Hash\":\"2c045408b0a4d0264bb5a3edfed4efd49fb4749cf8d216be9043768adff905e2\"}}}}";
@@ -47,17 +52,13 @@ namespace PSNLibrary.Services
     {
       this.psnLibrary = psnLibrary;
       this.api = psnLibrary.PlayniteApi;
-      tokenPath = Path.Combine(psnLibrary.GetPluginUserDataPath(), "token.json");
+      cookiesPath = Path.Combine(psnLibrary.GetPluginUserDataPath(), "cookies.dat");
+      legacyTokenPath = Path.Combine(psnLibrary.GetPluginUserDataPath(), "token.json");
     }
 
     public void Login()
     {
       var loggedIn = false;
-
-      if (File.Exists(tokenPath))
-      {
-        File.Delete(tokenPath);
-      }
 
       WebViewSettings webViewSettings = new WebViewSettings();
       webViewSettings.WindowHeight = 800;
@@ -90,85 +91,209 @@ namespace PSNLibrary.Services
         return;
       }
 
-      dumpCookies();
-
-      return;
+      DumpCookies();
     }
 
-    private IEnumerable<Playnite.SDK.HttpCookie> dumpCookies()
+    private bool DumpCookies()
     {
-      var view = api.WebViews.CreateOffscreenView();
-
-      var cookies = view.GetCookies();
-
-
-      var cookieContainer = new CookieContainer();
-      foreach (var cookie in cookies)
+      using (var view = api.WebViews.CreateOffscreenView())
       {
-        if (cookie.Domain == ".playstation.com")
+        var cookieContainer = new CookieContainer();
+        foreach (var cookie in view.GetCookies())
         {
-          cookieContainer.Add(new Uri("https://web.np.playstation.com"), new Cookie(cookie.Name, cookie.Value));
+          if (cookie.Domain == ".playstation.com")
+          {
+            cookieContainer.Add(new Uri("https://web.np.playstation.com"), new Cookie(cookie.Name, cookie.Value));
+          }
+          if (cookie.Domain == ".ca.account.sony.com" || cookie.Domain == "ca.account.sony.com" || cookie.Domain == ".sony.com")
+          {
+            cookieContainer.Add(new Uri("https://ca.account.sony.com"), new Cookie(cookie.Name, cookie.Value));
+          }
         }
-        if (cookie.Domain == ".ca.account.sony.com")
+
+        var cookiesSaved = WriteCookiesToDisk(cookieContainer);
+        if (cookiesSaved && File.Exists(legacyTokenPath))
         {
-          cookieContainer.Add(new Uri("https://ca.account.sony.com"), new Cookie(cookie.Name, cookie.Value));
+          File.Delete(legacyTokenPath);
         }
-        if (cookie.Domain == "ca.account.sony.com")
-        {
-          cookieContainer.Add(new Uri("https://ca.account.sony.com"), new Cookie(cookie.Name, cookie.Value));
-        }
-        if (cookie.Domain == ".sony.com")
-        {
-          cookieContainer.Add(new Uri("https://ca.account.sony.com"), new Cookie(cookie.Name, cookie.Value));
-        }
+
+        return cookiesSaved;
       }
-
-      WriteCookiesToDisk(cookieContainer);
-
-      view.Dispose();
-      return cookies;
     }
 
-    private void WriteCookiesToDisk(CookieContainer cookieJar)
+    private bool WriteCookiesToDisk(CookieContainer cookieJar)
     {
-      File.Delete(tokenPath);
-      using (Stream stream = File.Create(tokenPath))
+      var temporaryCookiesPath = cookiesPath + ".tmp";
+      try
       {
-        try
+        Directory.CreateDirectory(Path.GetDirectoryName(cookiesPath));
+        var encryptedCookies = ProtectedData.Protect(
+          Encoding.UTF8.GetBytes(Serialization.ToJson(GetStoredCookies(cookieJar))),
+          cookieEncryptionEntropy,
+          DataProtectionScope.CurrentUser);
+        File.WriteAllBytes(temporaryCookiesPath, encryptedCookies);
+        File.Copy(temporaryCookiesPath, cookiesPath, true);
+        return true;
+      }
+      catch (Exception e)
+      {
+        logger.Error(e, "Failed to save PlayStation authentication cookies.");
+        return false;
+      }
+      finally
+      {
+        if (File.Exists(temporaryCookiesPath))
         {
-          Console.Out.Write("Writing cookies to disk... ");
-          BinaryFormatter formatter = new BinaryFormatter();
-          formatter.Serialize(stream, cookieJar);
-          Console.Out.WriteLine("Done.");
-        }
-        catch (Exception e)
-        {
-          Console.Out.WriteLine("Problem writing cookies to disk: " + e.GetType());
+          File.Delete(temporaryCookiesPath);
         }
       }
     }
 
     private CookieContainer ReadCookiesFromDisk()
     {
+      if (File.Exists(cookiesPath))
+      {
+        try
+        {
+          var decryptedCookies = ProtectedData.Unprotect(
+            File.ReadAllBytes(cookiesPath),
+            cookieEncryptionEntropy,
+            DataProtectionScope.CurrentUser);
+          return CreateCookieContainer(Serialization.FromJson<List<StoredCookie>>(Encoding.UTF8.GetString(decryptedCookies)));
+        }
+        catch (Exception e)
+        {
+          logger.Error(e, "Failed to load saved PlayStation authentication cookies.");
+        }
+      }
+
+      var legacyCookies = ReadLegacyCookiesFromDisk();
+      if (legacyCookies != null)
+      {
+        if (WriteCookiesToDisk(legacyCookies))
+        {
+          File.Delete(legacyTokenPath);
+        }
+
+        return legacyCookies;
+      }
+
+      return new CookieContainer();
+    }
+
+    private CookieContainer ReadLegacyCookiesFromDisk()
+    {
+      if (!File.Exists(legacyTokenPath))
+      {
+        return null;
+      }
+
       try
       {
-        using (Stream stream = File.Open(tokenPath, FileMode.Open))
+        using (var stream = File.Open(legacyTokenPath, FileMode.Open, FileAccess.Read, FileShare.Read))
         {
-          Console.Out.Write("Reading cookies from disk... ");
-          BinaryFormatter formatter = new BinaryFormatter();
-          Console.Out.WriteLine("Done.");
-          return (CookieContainer)formatter.Deserialize(stream);
+          return new BinaryFormatter().Deserialize(stream) as CookieContainer;
         }
       }
       catch (Exception e)
       {
-        Console.Out.WriteLine("Problem reading cookies from disk: " + e.GetType());
-        return new CookieContainer();
+        logger.Error(e, "Failed to import legacy PlayStation authentication cookies.");
+        return null;
       }
     }
 
-    private async Task<bool> getMobileToken()
+    private static List<StoredCookie> GetStoredCookies(CookieContainer cookieJar)
     {
+      var cookies = new List<StoredCookie>();
+      var cookieKeys = new HashSet<string>(StringComparer.Ordinal);
+
+      foreach (var uri in cookieUris)
+      {
+        foreach (Cookie cookie in cookieJar.GetCookies(uri))
+        {
+          var key = string.Join("\n", cookie.Domain, cookie.Path, cookie.Name);
+          if (!cookieKeys.Add(key))
+          {
+            continue;
+          }
+
+          cookies.Add(new StoredCookie
+          {
+            Domain = cookie.Domain,
+            Path = cookie.Path,
+            Name = cookie.Name,
+            Value = cookie.Value,
+            Expires = cookie.Expires == DateTime.MinValue ? null : (DateTime?)cookie.Expires,
+            Secure = cookie.Secure,
+            HttpOnly = cookie.HttpOnly
+          });
+        }
+      }
+
+      return cookies;
+    }
+
+    private static CookieContainer CreateCookieContainer(IEnumerable<StoredCookie> storedCookies)
+    {
+      var cookieContainer = new CookieContainer();
+      if (storedCookies == null)
+      {
+        return cookieContainer;
+      }
+
+      foreach (var storedCookie in storedCookies)
+      {
+        if (string.IsNullOrEmpty(storedCookie?.Name) || string.IsNullOrEmpty(storedCookie.Domain))
+        {
+          continue;
+        }
+
+        try
+        {
+          var cookie = new Cookie(
+            storedCookie.Name,
+            storedCookie.Value ?? string.Empty,
+            string.IsNullOrEmpty(storedCookie.Path) ? "/" : storedCookie.Path,
+            storedCookie.Domain)
+          {
+            Secure = storedCookie.Secure,
+            HttpOnly = storedCookie.HttpOnly
+          };
+          if (storedCookie.Expires.HasValue)
+          {
+            cookie.Expires = storedCookie.Expires.Value;
+          }
+
+          cookieContainer.Add(cookie);
+        }
+        catch (CookieException e)
+        {
+          logger.Warn(e, "Skipping an invalid saved PlayStation authentication cookie.");
+        }
+      }
+
+      return cookieContainer;
+    }
+
+    private bool HasSavedCookies()
+    {
+      return File.Exists(cookiesPath) || File.Exists(legacyTokenPath);
+    }
+
+    private class StoredCookie
+    {
+      public string Domain { get; set; }
+      public string Path { get; set; }
+      public string Name { get; set; }
+      public string Value { get; set; }
+      public DateTime? Expires { get; set; }
+      public bool Secure { get; set; }
+      public bool HttpOnly { get; set; }
+    }
+
+    private async Task<bool> GetMobileToken(CancellationToken cancellationToken = default(CancellationToken))
+    {
+      cancellationToken.ThrowIfCancellationRequested();
       var cookieContainer = ReadCookiesFromDisk();
       using (var handler = new HttpClientHandler() { CookieContainer = cookieContainer })
       using (var httpClient = new HttpClient(handler))
@@ -176,46 +301,81 @@ namespace PSNLibrary.Services
         string mobileCode;
         try
         {
-          var mobileCodeResponse = await httpClient.GetAsync(mobileCodeUrl);
-          mobileCode = HttpUtility.ParseQueryString(mobileCodeResponse.Headers.Location.Query)["code"];
+          mobileCode = await GetMobileAuthorizationCode(httpClient, cancellationToken);
         }
-        catch
+        catch (OperationCanceledException)
         {
-          TryRefreshCookies();
+          throw;
+        }
+        catch (Exception e)
+        {
+          logger.Info(e, "Failed to obtain a PlayStation mobile authorization code. Trying to refresh cookies.");
+          if (!TryRefreshCookies())
+          {
+            return false;
+          }
+          CopyCookies(ReadCookiesFromDisk(), cookieContainer);
+
           try
           {
-            var mobileCodeResponse = await httpClient.GetAsync(mobileCodeUrl);
-            mobileCode = HttpUtility.ParseQueryString(mobileCodeResponse.Headers.Location.Query)["code"];
+            mobileCode = await GetMobileAuthorizationCode(httpClient, cancellationToken);
           }
-          catch
+          catch (OperationCanceledException)
           {
+            throw;
+          }
+          catch (Exception retryException)
+          {
+            logger.Warn(retryException, "Failed to obtain a PlayStation mobile authorization code after refreshing cookies.");
             return false;
           }
         }
 
-        HttpRequestMessage requestMessage = new HttpRequestMessage(new HttpMethod("post"), mobileTokenUrl);
-        var requestMessageForm = new List<KeyValuePair<string, string>>();
-        requestMessageForm.Add(new KeyValuePair<string, string>("code", mobileCode));
-        requestMessageForm.Add(new KeyValuePair<string, string>("redirect_uri", "com.scee.psxandroid.scecompcall://redirect"));
-        requestMessageForm.Add(new KeyValuePair<string, string>("grant_type", "authorization_code"));
-        requestMessageForm.Add(new KeyValuePair<string, string>("token_format", "jwt"));
-        requestMessage.Content = new FormUrlEncodedContent(requestMessageForm);
-        requestMessage.Headers.Authorization = new AuthenticationHeaderValue("Basic", mobileTokenAuth);
+        using (var requestMessage = new HttpRequestMessage(HttpMethod.Post, mobileTokenUrl))
+        {
+          requestMessage.Content = new FormUrlEncodedContent(new[]
+          {
+            new KeyValuePair<string, string>("code", mobileCode),
+            new KeyValuePair<string, string>("redirect_uri", "com.scee.psxandroid.scecompcall://redirect"),
+            new KeyValuePair<string, string>("grant_type", "authorization_code"),
+            new KeyValuePair<string, string>("token_format", "jwt")
+          });
+          requestMessage.Headers.Authorization = new AuthenticationHeaderValue("Basic", mobileTokenAuth);
 
-        var mobileTokenResponse = await httpClient.SendAsync(requestMessage);
-        var strResponse = await mobileTokenResponse.Content.ReadAsStringAsync();
-        mobileToken = Serialization.FromJson<MobileTokens>(strResponse);
+          using (var mobileTokenResponse = await httpClient.SendAsync(requestMessage, cancellationToken))
+          {
+            var strResponse = await GetSuccessfulResponseContent(mobileTokenResponse, "the mobile token request", cancellationToken);
+            mobileToken = Serialization.FromJson<MobileTokens>(strResponse);
+            if (string.IsNullOrEmpty(mobileToken?.access_token))
+            {
+              throw new InvalidDataException("The PlayStation mobile token response did not contain an access token.");
+            }
+          }
+        }
+
         return true;
       }
     }
 
+    private static async Task<string> GetMobileAuthorizationCode(HttpClient httpClient, CancellationToken cancellationToken)
+    {
+      using (var response = await httpClient.GetAsync(mobileCodeUrl, cancellationToken))
+      {
+        var mobileCode = HttpUtility.ParseQueryString(response.Headers.Location?.Query)["code"];
+        if (!string.IsNullOrEmpty(mobileCode))
+        {
+          return mobileCode;
+        }
+
+        var responseContent = await ReadResponseContent(response, cancellationToken);
+        throw new InvalidDataException("The PlayStation mobile authorization response did not contain a redirect code" + GetResponseDetails(responseContent) + ".");
+      }
+    }
 
     public void ClearAuthentication()
     {
-      if (File.Exists(tokenPath))
-      {
-        File.Delete(tokenPath);
-      }
+      DeleteCookieStore(cookiesPath);
+      DeleteCookieStore(legacyTokenPath);
 
       using (var view = api.WebViews.CreateOffscreenView())
       {
@@ -228,230 +388,341 @@ namespace PSNLibrary.Services
       }
     }
 
-    public async Task CheckAuthentication()
+    public async Task CheckAuthentication(CancellationToken cancellationToken = default(CancellationToken))
     {
-      string npsso = psnLibrary.SettingsViewModel.Settings.Npsso;
-      if (!File.Exists(tokenPath) && npsso == null)
+      cancellationToken.ThrowIfCancellationRequested();
+      var npsso = psnLibrary.SettingsViewModel.Settings.Npsso;
+      if (!HasSavedCookies() && string.IsNullOrWhiteSpace(npsso))
       {
-        throw new Exception("User is not authenticated: token file doesn't exist.");
+        throw new Exception("User is not authenticated: no saved cookies or NPSSO token found.");
       }
-      else
+
+      if (!await GetIsUserLoggedIn(cancellationToken))
       {
-        if (!await GetIsUserLoggedIn())
+        cancellationToken.ThrowIfCancellationRequested();
+        if (!TryRefreshCookies() || !await GetIsUserLoggedIn(cancellationToken))
         {
-          TryRefreshCookies();
-          if (!await GetIsUserLoggedIn())
-          {
-            throw new Exception("User is not authenticated.");
-          }
-          else
-          {
-            if (mobileToken == null)
-            {
-              if (!await getMobileToken())
-              {
-                throw new Exception("User is not authenticated.");
-              }
-            }
-          }
+          throw new Exception("User is not authenticated.");
         }
-        else
-        {
-          if (mobileToken == null)
-          {
-            if (!await getMobileToken())
-            {
-              throw new Exception("User is not authenticated.");
-            }
-          }
-        }
+      }
+
+      if (mobileToken == null && !await GetMobileToken(cancellationToken))
+      {
+        throw new Exception("User is not authenticated.");
       }
     }
 
-    public async Task<List<PlayedTitlesResponseData.PlayedTitlesRetrieve.Title>> GetPlayedTitles()
+    public async Task<List<PlayedTitlesResponseData.PlayedTitlesRetrieve.Title>> GetPlayedTitles(CancellationToken cancellationToken = default(CancellationToken))
     {
+      cancellationToken.ThrowIfCancellationRequested();
       var titles = new List<PlayedTitlesResponseData.PlayedTitlesRetrieve.Title>();
-
       var cookieContainer = ReadCookiesFromDisk();
       using (var handler = new HttpClientHandler() { CookieContainer = cookieContainer })
       using (var httpClient = new HttpClient(handler))
       {
         httpClient.DefaultRequestHeaders.TryAddWithoutValidation("x-apollo-operation-name", "pn_psn");
-        var resp = httpClient.GetAsync(playedListUrl).GetAwaiter().GetResult();
-        var strResponse = await resp.Content.ReadAsStringAsync();
-        var titles_part = Serialization.FromJson<PlayedTitles>(strResponse);
-        titles.AddRange(titles_part.data.gameLibraryTitlesRetrieve.games);
+        using (var response = await httpClient.GetAsync(playedListUrl, cancellationToken))
+        {
+          var strResponse = await GetSuccessfulResponseContent(response, "the recently played games request", cancellationToken);
+          var titlesPart = Serialization.FromJson<PlayedTitles>(strResponse);
+          var games = titlesPart?.data?.gameLibraryTitlesRetrieve?.games;
+          if (games == null)
+          {
+            throw new InvalidDataException("The PlayStation recently played games response did not contain a games list.");
+          }
+
+          titles.AddRange(games);
+        }
       }
 
       return titles;
     }
 
-    public async Task<List<AccountTitlesResponseData.AccountTitlesRetrieve.Title>> GetAccountTitles()
+    public async Task<List<AccountTitlesResponseData.AccountTitlesRetrieve.Title>> GetAccountTitles(CancellationToken cancellationToken = default(CancellationToken))
     {
       var titles = new List<AccountTitlesResponseData.AccountTitlesRetrieve.Title>();
-
       var cookieContainer = ReadCookiesFromDisk();
       using (var handler = new HttpClientHandler() { CookieContainer = cookieContainer })
       using (var httpClient = new HttpClient(handler))
       {
-
+        httpClient.DefaultRequestHeaders.TryAddWithoutValidation("x-apollo-operation-name", "pn_psn");
         var itemCount = 0;
         var offset = -pageRequestLimit;
 
         do
         {
-          object[] args = { offset, pageRequestLimit };
-          httpClient.DefaultRequestHeaders.TryAddWithoutValidation("x-apollo-operation-name", "pn_psn");
-          var resp = httpClient.GetAsync(gameListUrl.Format(offset + pageRequestLimit, pageRequestLimit)).GetAwaiter().GetResult();
-          var strResponse = await resp.Content.ReadAsStringAsync();
-          var titles_part = Serialization.FromJson<AccountTitles>(strResponse);
-          titles.AddRange(titles_part.data.purchasedTitlesRetrieve.games);
-          offset = titles_part.data.purchasedTitlesRetrieve.pageInfo.offset;
-          itemCount = titles_part.data.purchasedTitlesRetrieve.pageInfo.totalCount;
+          cancellationToken.ThrowIfCancellationRequested();
+          using (var response = await httpClient.GetAsync(gameListUrl.Format(offset + pageRequestLimit, pageRequestLimit), cancellationToken))
+          {
+            var strResponse = await GetSuccessfulResponseContent(response, "the purchased games request", cancellationToken);
+            var titlesPart = Serialization.FromJson<AccountTitles>(strResponse);
+            var purchasedTitles = titlesPart?.data?.purchasedTitlesRetrieve;
+            if (purchasedTitles?.games == null || purchasedTitles.pageInfo == null)
+            {
+              throw new InvalidDataException("The PlayStation purchased games response did not contain paging information.");
+            }
+
+            titles.AddRange(purchasedTitles.games);
+            offset = purchasedTitles.pageInfo.offset;
+            itemCount = purchasedTitles.pageInfo.totalCount;
+          }
         } while (offset + pageRequestLimit < itemCount);
-
-
       }
 
       return titles;
     }
 
-    public async Task<List<PlayedTitlesMobile.PlayedTitleMobile>> GetPlayedTitlesMobile()
+    public async Task<List<PlayedTitlesMobile.PlayedTitleMobile>> GetPlayedTitlesMobile(CancellationToken cancellationToken = default(CancellationToken))
     {
       var titles = new List<PlayedTitlesMobile.PlayedTitleMobile>();
-
+      EnsureMobileToken();
       var cookieContainer = ReadCookiesFromDisk();
       using (var handler = new HttpClientHandler() { CookieContainer = cookieContainer })
       using (var httpClient = new HttpClient(handler))
       {
         int? offset = 0;
-
         do
         {
-          HttpRequestMessage requestMessage = new HttpRequestMessage(new HttpMethod("get"), playedMobileListUrl.Format(offset));
-          requestMessage.Headers.Authorization = new AuthenticationHeaderValue("Bearer", mobileToken.access_token);
-          var resp = await httpClient.SendAsync(requestMessage);
-          var strResponse = await resp.Content.ReadAsStringAsync();
-          var titles_part = Serialization.FromJson<PlayedTitlesMobile>(strResponse);
-          titles.AddRange(titles_part.titles);
-          offset = titles_part.nextOffset;
+          cancellationToken.ThrowIfCancellationRequested();
+          using (var requestMessage = new HttpRequestMessage(HttpMethod.Get, playedMobileListUrl.Format(offset)))
+          {
+            requestMessage.Headers.Authorization = new AuthenticationHeaderValue("Bearer", mobileToken.access_token);
+            using (var response = await httpClient.SendAsync(requestMessage, cancellationToken))
+            {
+              var strResponse = await GetSuccessfulResponseContent(response, "the mobile recently played games request", cancellationToken);
+              var titlesPart = Serialization.FromJson<PlayedTitlesMobile>(strResponse);
+              if (titlesPart?.titles == null)
+              {
+                throw new InvalidDataException("The PlayStation mobile recently played games response did not contain a games list.");
+              }
+
+              titles.AddRange(titlesPart.titles);
+              offset = titlesPart.nextOffset;
+            }
+          }
         } while (offset != null);
-
-
       }
 
       return titles;
     }
 
-    public async Task<List<TrophyTitleMobile>> GetTrohpiesMobile()
+    public async Task<List<TrophyTitleMobile>> GetTrohpiesMobile(CancellationToken cancellationToken = default(CancellationToken))
     {
       var titles = new List<TrophyTitleMobile>();
-
+      EnsureMobileToken();
       var cookieContainer = ReadCookiesFromDisk();
       using (var handler = new HttpClientHandler() { CookieContainer = cookieContainer })
       using (var httpClient = new HttpClient(handler))
       {
         int? offset = 0;
-
         do
         {
-          HttpRequestMessage requestMessage = new HttpRequestMessage(new HttpMethod("get"), trophiesMobileUrl.Format(offset));
-          requestMessage.Headers.Authorization = new AuthenticationHeaderValue("Bearer", mobileToken.access_token);
-          var resp = await httpClient.SendAsync(requestMessage);
-          var strResponse = await resp.Content.ReadAsStringAsync();
-          var titles_part = Serialization.FromJson<TrophyTitlesMobile>(strResponse);
-          titles.AddRange(titles_part.trophyTitles);
-          offset = titles_part.nextOffset;
+          cancellationToken.ThrowIfCancellationRequested();
+          using (var requestMessage = new HttpRequestMessage(HttpMethod.Get, trophiesMobileUrl.Format(offset)))
+          {
+            requestMessage.Headers.Authorization = new AuthenticationHeaderValue("Bearer", mobileToken.access_token);
+            using (var response = await httpClient.SendAsync(requestMessage, cancellationToken))
+            {
+              var strResponse = await GetSuccessfulResponseContent(response, "the trophy list request", cancellationToken);
+              var titlesPart = Serialization.FromJson<TrophyTitlesMobile>(strResponse);
+              if (titlesPart?.trophyTitles == null)
+              {
+                throw new InvalidDataException("The PlayStation trophy list response did not contain trophy titles.");
+              }
+
+              titles.AddRange(titlesPart.trophyTitles);
+              offset = titlesPart.nextOffset;
+            }
+          }
         } while (offset != null);
       }
 
       return titles;
     }
 
-
-    public async Task<List<TrophyTitlesWithIdsMobile.TrophyTitleWithIdsMobile>> GetTrohpiesWithIdsMobile(string[] titleIdsArray)
+    public async Task<List<TrophyTitlesWithIdsMobile.TrophyTitleWithIdsMobile>> GetTrohpiesWithIdsMobile(string[] titleIdsArray, CancellationToken cancellationToken = default(CancellationToken))
     {
       var titles = new List<TrophyTitlesWithIdsMobile.TrophyTitleWithIdsMobile>();
+      if (titleIdsArray == null || titleIdsArray.Length == 0)
+      {
+        return titles;
+      }
 
+      EnsureMobileToken();
       var cookieContainer = ReadCookiesFromDisk();
       using (var handler = new HttpClientHandler() { CookieContainer = cookieContainer })
       using (var httpClient = new HttpClient(handler))
       {
-        int querySize = 5;
-        int offset = 0;
-
+        const int querySize = 5;
+        var offset = 0;
         do
         {
-          HttpRequestMessage requestMessage = new HttpRequestMessage(new HttpMethod("get"), trophiesWithIdsMobileUrl.Format(string.Join(",", titleIdsArray.Skip(offset).Take(querySize))));
-          requestMessage.Headers.Authorization = new AuthenticationHeaderValue("Bearer", mobileToken.access_token);
-          var resp = await httpClient.SendAsync(requestMessage);
-          var strResponse = await resp.Content.ReadAsStringAsync();
-          var titles_part = Serialization.FromJson<TrophyTitlesWithIdsMobile>(strResponse);
-          titles.AddRange(titles_part.titles);
-          offset = offset + querySize;
+          cancellationToken.ThrowIfCancellationRequested();
+          using (var requestMessage = new HttpRequestMessage(HttpMethod.Get, trophiesWithIdsMobileUrl.Format(string.Join(",", titleIdsArray.Skip(offset).Take(querySize)))))
+          {
+            requestMessage.Headers.Authorization = new AuthenticationHeaderValue("Bearer", mobileToken.access_token);
+            using (var response = await httpClient.SendAsync(requestMessage, cancellationToken))
+            {
+              var strResponse = await GetSuccessfulResponseContent(response, "the trophy details request", cancellationToken);
+              var titlesPart = Serialization.FromJson<TrophyTitlesWithIdsMobile>(strResponse);
+              if (titlesPart?.titles == null)
+              {
+                throw new InvalidDataException("The PlayStation trophy details response did not contain trophy titles.");
+              }
+
+              titles.AddRange(titlesPart.titles);
+              offset += querySize;
+            }
+          }
         } while (offset < titleIdsArray.Length);
       }
 
       return titles;
     }
 
-    private void TryRefreshCookies()
+    private bool TryRefreshCookies()
     {
-      string address;
-      using (var webView = api.WebViews.CreateOffscreenView())
-      {
-        webView.LoadingChanged += (s, e) =>
-        {
-          address = webView.GetCurrentAddress();
-          webView.Close();
-        };
-
-        string npsso = psnLibrary.SettingsViewModel.Settings.Npsso;
-        Playnite.SDK.HttpCookie npssoCookie = new Playnite.SDK.HttpCookie();
-        npssoCookie.Domain = "ca.account.sony.com";
-        npssoCookie.Value = npsso;
-        npssoCookie.Name = "npsso";
-        npssoCookie.Path = "/";
-        webView.SetCookies("https://ca.account.sony.com", npssoCookie);
-        webView.NavigateAndWait(loginUrl);
-      }
-
-      dumpCookies();
-    }
-
-    public async Task<bool> GetIsUserLoggedIn()
-    {
-      string npsso = psnLibrary.SettingsViewModel.Settings.Npsso;
-      if (!File.Exists(tokenPath) && npsso == null)
+      var npsso = psnLibrary.SettingsViewModel.Settings.Npsso;
+      if (string.IsNullOrWhiteSpace(npsso))
       {
         return false;
       }
 
       try
       {
+        using (var webView = api.WebViews.CreateOffscreenView())
+        {
+          webView.LoadingChanged += (s, e) => webView.Close();
+          webView.SetCookies("https://ca.account.sony.com", new Playnite.SDK.HttpCookie
+          {
+            Domain = "ca.account.sony.com",
+            Value = npsso,
+            Name = "npsso",
+            Path = "/"
+          });
+          webView.NavigateAndWait(loginUrl);
+        }
+
+        return DumpCookies();
+      }
+      catch (Exception e)
+      {
+        logger.Error(e, "Failed to refresh PlayStation authentication cookies.");
+        return false;
+      }
+    }
+
+    public async Task<bool> GetIsUserLoggedIn(CancellationToken cancellationToken = default(CancellationToken))
+    {
+      var npsso = psnLibrary.SettingsViewModel.Settings.Npsso;
+      if (!HasSavedCookies() && string.IsNullOrWhiteSpace(npsso))
+      {
+        return false;
+      }
+
+      try
+      {
+        cancellationToken.ThrowIfCancellationRequested();
         var cookieContainer = ReadCookiesFromDisk();
         using (var handler = new HttpClientHandler() { CookieContainer = cookieContainer })
         using (var httpClient = new HttpClient(handler))
         {
           httpClient.DefaultRequestHeaders.TryAddWithoutValidation("x-apollo-operation-name", "pn_psn");
-          var resp = httpClient.GetAsync(gameListUrl.Format(0, 24)).GetAwaiter().GetResult();
-          var strResponse = await resp.Content.ReadAsStringAsync();
-          if (Serialization.TryFromJson<AccountTitlesErrorResponse>(strResponse, out var error) && error.data.purchasedTitlesRetrieve == null)
+          using (var response = await httpClient.GetAsync(gameListUrl.Format(0, 24), cancellationToken))
           {
-            return false;
-          }
+            if (!response.IsSuccessStatusCode)
+            {
+              return false;
+            }
 
-          if (Serialization.TryFromJson<AccountTitles>(strResponse, out var accountTitles) && accountTitles.data.purchasedTitlesRetrieve != null)
-          {
-            return true;
+            var strResponse = await ReadResponseContent(response, cancellationToken);
+            if (Serialization.TryFromJson<AccountTitlesErrorResponse>(strResponse, out var error) && error?.data?.purchasedTitlesRetrieve == null)
+            {
+              return false;
+            }
+
+            return Serialization.TryFromJson<AccountTitles>(strResponse, out var accountTitles) && accountTitles?.data?.purchasedTitlesRetrieve != null;
           }
         }
-        return false;
+      }
+      catch (OperationCanceledException)
+      {
+        throw;
       }
       catch (Exception e) when (!Debugger.IsAttached)
       {
         logger.Error(e, "Failed to check if user is authenticated into PSN.");
         return false;
+      }
+    }
+
+    private void EnsureMobileToken()
+    {
+      if (string.IsNullOrEmpty(mobileToken?.access_token))
+      {
+        throw new InvalidOperationException("A PlayStation mobile token is required before loading mobile game data.");
+      }
+    }
+
+    private static async Task<string> GetSuccessfulResponseContent(HttpResponseMessage response, string requestDescription, CancellationToken cancellationToken)
+    {
+      var content = await ReadResponseContent(response, cancellationToken);
+      if (!response.IsSuccessStatusCode)
+      {
+        throw new HttpRequestException("PlayStation returned " + (int)response.StatusCode + " (" + response.ReasonPhrase + ") for " + requestDescription + GetResponseDetails(content) + ".");
+      }
+
+      return content;
+    }
+
+    private static async Task<string> ReadResponseContent(HttpResponseMessage response, CancellationToken cancellationToken)
+    {
+      cancellationToken.ThrowIfCancellationRequested();
+      var content = response?.Content == null ? string.Empty : await response.Content.ReadAsStringAsync();
+      cancellationToken.ThrowIfCancellationRequested();
+      return content;
+    }
+
+    private static string GetResponseDetails(string content)
+    {
+      if (string.IsNullOrWhiteSpace(content))
+      {
+        return string.Empty;
+      }
+
+      var compactContent = string.Join(" ", content.Split((char[])null, StringSplitOptions.RemoveEmptyEntries));
+      return ": " + compactContent.Substring(0, Math.Min(compactContent.Length, 300));
+    }
+
+    private static void DeleteCookieStore(string path)
+    {
+      if (File.Exists(path))
+      {
+        File.Delete(path);
+      }
+    }
+
+    private static void CopyCookies(CookieContainer source, CookieContainer target)
+    {
+      foreach (var storedCookie in GetStoredCookies(source))
+      {
+        try
+        {
+          target.Add(new Cookie(
+            storedCookie.Name,
+            storedCookie.Value ?? string.Empty,
+            string.IsNullOrEmpty(storedCookie.Path) ? "/" : storedCookie.Path,
+            storedCookie.Domain)
+          {
+            Secure = storedCookie.Secure,
+            HttpOnly = storedCookie.HttpOnly,
+            Expires = storedCookie.Expires ?? DateTime.MinValue
+          });
+        }
+        catch (CookieException e)
+        {
+          logger.Warn(e, "Skipping an invalid refreshed PlayStation authentication cookie.");
+        }
       }
     }
   }

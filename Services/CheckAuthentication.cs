@@ -4,18 +4,23 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace PSNLibrary.Services
 {
   internal class CheckAuthentication
   {
-    public static bool call(PSNLibrary psnLibrary, PSNClient psnClient)
+    public static bool call(PSNLibrary psnLibrary, PSNClient psnClient, CancellationToken cancellationToken = default(CancellationToken))
     {
       try
       {
-        psnClient.CheckAuthentication().GetAwaiter().GetResult();
+        psnClient.CheckAuthentication(cancellationToken).GetAwaiter().GetResult();
         return true;
+      }
+      catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+      {
+        throw;
       }
       catch (Exception e)
       {
