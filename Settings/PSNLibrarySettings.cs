@@ -3,14 +3,12 @@ using Playnite.SDK.Data;
 using PSNLibrary.Services;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 
 namespace PSNLibrary
 {
   public class PSNLibrarySettings : ObservableObject
   {
     public bool connectAccount = true;
-    public bool downloadImageMetadata = true;
     // Existing "LastPlayed" settings deserialize into this value. New installs follow Playnite's normal import behavior by default.
     public bool lastPlayed = false;
     // Existing "Playtime" settings deserialize into this value. New installs follow Playnite's global policy by default.
@@ -27,7 +25,6 @@ namespace PSNLibrary
     private string npsso = string.Empty;
 
     public bool ConnectAccount { get => connectAccount; set => SetValue(ref connectAccount, value); }
-    public bool DownloadImageMetadata { get => downloadImageMetadata; set => SetValue(ref downloadImageMetadata, value); }
     [SerializationPropertyName("LastPlayed")]
     public bool AlwaysUpdateExistingLastPlayed { get => lastPlayed; set => SetValue(ref lastPlayed, value); }
     [SerializationPropertyName("Playtime")]
@@ -121,14 +118,6 @@ namespace PSNLibrary
       }
     }
 
-    public RelayCommand<object> LoginCommand
-    {
-      get => new RelayCommand<object>((a) =>
-      {
-        Login();
-      });
-    }
-
     public RelayCommand<object> CheckAuthenticationCommand
     {
       get => new RelayCommand<object>((a) =>
@@ -137,19 +126,6 @@ namespace PSNLibrary
       });
     }
 
-    private void Login()
-    {
-      Settings.Npsso = null;
-      try
-      {
-        clientApi.Login();
-        OnPropertyChanged(nameof(IsUserLoggedIn));
-      }
-      catch (Exception e) when (!Debugger.IsAttached)
-      {
-        // Logger.Error(e, "Failed to authenticate user.");
-      }
-    }
     private void CheckAuthentication()
     {
       clientApi.ClearAuthentication();

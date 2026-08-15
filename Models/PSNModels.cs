@@ -18,12 +18,13 @@ namespace PSNLibrary.Models
         {
           public string url { get; set; }
         }
-        public string conceptId { get; set; }
+        public object conceptId { get; set; }
         public string entitlementId { get; set; }
         public bool? isActive { get; set; }
         public string name { get; set; }
         public string platform { get; set; }
         public string productId { get; set; }
+        public string membership { get; set; }
         public string subscriptionService { get; set; }
         public string titleId { get; set; }
         public DateTime? lastPlayedDateTime { get; set; }
@@ -50,7 +51,7 @@ namespace PSNLibrary.Models
         {
           public string url { get; set; }
         }
-        public string conceptId { get; set; }
+        public object conceptId { get; set; }
         public string entitlementId { get; set; }
         public bool? isActive { get; set; }
         public bool isDownloadable { get; set; }
@@ -58,6 +59,7 @@ namespace PSNLibrary.Models
         public string name { get; set; }
         public string platform { get; set; }
         public string productId { get; set; }
+        public string membership { get; set; }
         public string subscriptionService { get; set; }
         public string titleId { get; set; }
         public Image image { get; set; }
@@ -78,7 +80,7 @@ namespace PSNLibrary.Models
 
       public List<Title> games { get; set; }
 
-      public PageInfo pageInfo;
+      public PageInfo pageInfo { get; set; }
     }
     public AccountTitlesRetrieve purchasedTitlesRetrieve { get; set; }
   }

@@ -32,14 +32,14 @@ namespace PSNLibrary.Services
       new Uri("https://ca.account.sony.com")
     };
     private static readonly byte[] cookieEncryptionEntropy = Encoding.UTF8.GetBytes("PSNLibrary.CookieStore.v1");
-    private IPlayniteAPI api;
+    private readonly IPlayniteAPI api;
     private MobileTokens mobileToken;
     private readonly PSNLibrary psnLibrary;
     private readonly string cookiesPath;
     private readonly string legacyTokenPath;
     private const int pageRequestLimit = 100;
     private const string loginUrl = @"https://web.np.playstation.com/api/session/v1/signin?redirect_uri=https://io.playstation.com/central/auth/login%3FpostSignInURL=https://www.playstation.com/home%26cancelURL=https://www.playstation.com/home&smcid=web:pdc";
-    private const string gameListUrl = "https://web.np.playstation.com/api/graphql/v1/op?operationName=getPurchasedGameList&variables={{\"isActive\":true,\"platform\":[\"ps3\",\"ps4\",\"ps5\"],\"start\":{0},\"size\":{1},\"subscriptionService\":\"NONE\"}}&extensions={{\"persistedQuery\":{{\"version\":1,\"sha256Hash\":\"2c045408b0a4d0264bb5a3edfed4efd49fb4749cf8d216be9043768adff905e2\"}}}}";
+    private const string gameListUrl = "https://web.np.playstation.com/api/graphql/v1/op?operationName=getPurchasedGameList&variables={{\"isActive\":true,\"platform\":[\"ps3\",\"ps4\",\"ps5\"],\"start\":{0},\"size\":{1},\"sortBy\":\"ACTIVE_DATE\",\"sortDirection\":\"desc\"}}&extensions={{\"persistedQuery\":{{\"version\":1,\"sha256Hash\":\"827a423f6a8ddca4107ac01395af2ec0eafd8396fc7fa204aaf9b7ed2eefa168\"}}}}";
     private const string playedListUrl = "https://web.np.playstation.com/api/graphql/v1/op?operationName=getUserGameList&variables=%7B%22limit%22%3A100%2C%22categories%22%3A%22ps4_game%2Cps5_native_game%22%7D&extensions=%7B%22persistedQuery%22%3A%7B%22version%22%3A1%2C%22sha256Hash%22%3A%22e780a6d8b921ef0c59ec01ea5c5255671272ca0d819edb61320914cf7a78b3ae%22%7D%7D";
     private const string mobileCodeUrl = "https://ca.account.sony.com/api/authz/v3/oauth/authorize?access_type=offline&client_id=09515159-7237-4370-9b40-3806e67c0891&redirect_uri=com.scee.psxandroid.scecompcall%3A%2F%2Fredirect&response_type=code&scope=psn%3Amobile.v2.core%20psn%3Aclientapp";
     private const string mobileTokenUrl = "https://ca.account.sony.com/api/authz/v3/oauth/token";
@@ -51,74 +51,33 @@ namespace PSNLibrary.Services
     public PSNClient(PSNLibrary psnLibrary)
     {
       this.psnLibrary = psnLibrary;
-      this.api = psnLibrary.PlayniteApi;
+      api = psnLibrary.PlayniteApi;
       cookiesPath = Path.Combine(psnLibrary.GetPluginUserDataPath(), "cookies.dat");
       legacyTokenPath = Path.Combine(psnLibrary.GetPluginUserDataPath(), "token.json");
     }
 
-    public void Login()
+    private bool DumpCookies(IEnumerable<Playnite.SDK.HttpCookie> cookies)
     {
-      var loggedIn = false;
-
-      WebViewSettings webViewSettings = new WebViewSettings();
-      webViewSettings.WindowHeight = 800;
-      webViewSettings.WindowWidth = 1100;
-      webViewSettings.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36";
-
-      using (var view = api.WebViews.CreateView(webViewSettings))
+      var cookieContainer = new CookieContainer();
+      foreach (var cookie in cookies)
       {
-        view.LoadingChanged += (s, e) =>
+        if (cookie.Domain == ".playstation.com")
         {
-          var address = view.GetCurrentAddress();
-          if (address.StartsWith(@"https://www.playstation.com/"))
-          {
-            loggedIn = true;
-            view.Close();
-          }
-        };
-
-        view.DeleteDomainCookies(".sony.com");
-        view.DeleteDomainCookies(".ca.account.sony.com");
-        view.DeleteDomainCookies("ca.account.sony.com");
-        view.DeleteDomainCookies(".playstation.com");
-        view.DeleteDomainCookies("io.playstation.com");
-        view.Navigate(loginUrl);
-        view.OpenDialog();
-      }
-
-      if (!loggedIn)
-      {
-        return;
-      }
-
-      DumpCookies();
-    }
-
-    private bool DumpCookies()
-    {
-      using (var view = api.WebViews.CreateOffscreenView())
-      {
-        var cookieContainer = new CookieContainer();
-        foreach (var cookie in view.GetCookies())
-        {
-          if (cookie.Domain == ".playstation.com")
-          {
-            cookieContainer.Add(new Uri("https://web.np.playstation.com"), new Cookie(cookie.Name, cookie.Value));
-          }
-          if (cookie.Domain == ".ca.account.sony.com" || cookie.Domain == "ca.account.sony.com" || cookie.Domain == ".sony.com")
-          {
-            cookieContainer.Add(new Uri("https://ca.account.sony.com"), new Cookie(cookie.Name, cookie.Value));
-          }
+          cookieContainer.Add(new Uri("https://web.np.playstation.com"), new Cookie(cookie.Name, cookie.Value));
         }
-
-        var cookiesSaved = WriteCookiesToDisk(cookieContainer);
-        if (cookiesSaved && File.Exists(legacyTokenPath))
+        if (cookie.Domain == ".ca.account.sony.com" || cookie.Domain == "ca.account.sony.com" || cookie.Domain == ".sony.com")
         {
-          File.Delete(legacyTokenPath);
+          cookieContainer.Add(new Uri("https://ca.account.sony.com"), new Cookie(cookie.Name, cookie.Value));
         }
-
-        return cookiesSaved;
       }
+
+      var cookiesSaved = WriteCookiesToDisk(cookieContainer);
+      if (cookiesSaved && File.Exists(legacyTokenPath))
+      {
+        File.Delete(legacyTokenPath);
+      }
+
+      return cookiesSaved;
     }
 
     private bool WriteCookiesToDisk(CookieContainer cookieJar)
@@ -309,7 +268,7 @@ namespace PSNLibrary.Services
         }
         catch (Exception e)
         {
-          logger.Info(e, "Failed to obtain a PlayStation mobile authorization code. Trying to refresh cookies.");
+          logger.Info(e, "Failed to obtain a PlayStation mobile authorization code. Trying to refresh cookies from NPSSO.");
           if (!TryRefreshCookies())
           {
             return false;
@@ -326,7 +285,7 @@ namespace PSNLibrary.Services
           }
           catch (Exception retryException)
           {
-            logger.Warn(retryException, "Failed to obtain a PlayStation mobile authorization code after refreshing cookies.");
+            logger.Warn(retryException, "Failed to obtain a PlayStation mobile authorization code after refreshing cookies from NPSSO.");
             return false;
           }
         }
@@ -374,18 +333,9 @@ namespace PSNLibrary.Services
 
     public void ClearAuthentication()
     {
+      mobileToken = null;
       DeleteCookieStore(cookiesPath);
       DeleteCookieStore(legacyTokenPath);
-
-      using (var view = api.WebViews.CreateOffscreenView())
-      {
-        view.DeleteDomainCookies(".sony.com");
-        view.DeleteDomainCookies(".ca.account.sony.com");
-        view.DeleteDomainCookies("ca.account.sony.com");
-        view.DeleteDomainCookies(".playstation.com");
-        view.DeleteDomainCookies("io.playstation.com");
-        view.Close();
-      }
     }
 
     public async Task CheckAuthentication(CancellationToken cancellationToken = default(CancellationToken))
@@ -446,13 +396,11 @@ namespace PSNLibrary.Services
       using (var httpClient = new HttpClient(handler))
       {
         httpClient.DefaultRequestHeaders.TryAddWithoutValidation("x-apollo-operation-name", "pn_psn");
-        var itemCount = 0;
-        var offset = -pageRequestLimit;
-
-        do
+        var offset = 0;
+        while (true)
         {
           cancellationToken.ThrowIfCancellationRequested();
-          using (var response = await httpClient.GetAsync(gameListUrl.Format(offset + pageRequestLimit, pageRequestLimit), cancellationToken))
+          using (var response = await httpClient.GetAsync(gameListUrl.Format(offset, pageRequestLimit), cancellationToken))
           {
             var strResponse = await GetSuccessfulResponseContent(response, "the purchased games request", cancellationToken);
             var titlesPart = Serialization.FromJson<AccountTitles>(strResponse);
@@ -463,10 +411,20 @@ namespace PSNLibrary.Services
             }
 
             titles.AddRange(purchasedTitles.games);
-            offset = purchasedTitles.pageInfo.offset;
-            itemCount = purchasedTitles.pageInfo.totalCount;
+            if (purchasedTitles.pageInfo.isLast)
+            {
+              break;
+            }
+
+            var nextOffset = purchasedTitles.pageInfo.offset + purchasedTitles.pageInfo.size;
+            if (nextOffset <= offset)
+            {
+              throw new InvalidDataException("The PlayStation purchased games response did not advance its page offset.");
+            }
+
+            offset = nextOffset;
           }
-        } while (offset + pageRequestLimit < itemCount);
+        }
       }
 
       return titles;
@@ -592,7 +550,6 @@ namespace PSNLibrary.Services
       {
         using (var webView = api.WebViews.CreateOffscreenView())
         {
-          webView.LoadingChanged += (s, e) => webView.Close();
           webView.SetCookies("https://ca.account.sony.com", new Playnite.SDK.HttpCookie
           {
             Domain = "ca.account.sony.com",
@@ -601,13 +558,12 @@ namespace PSNLibrary.Services
             Path = "/"
           });
           webView.NavigateAndWait(loginUrl);
+          return DumpCookies(webView.GetCookies());
         }
-
-        return DumpCookies();
       }
       catch (Exception e)
       {
-        logger.Error(e, "Failed to refresh PlayStation authentication cookies.");
+        logger.Error(e, "Failed to refresh PlayStation authentication cookies from NPSSO.");
         return false;
       }
     }

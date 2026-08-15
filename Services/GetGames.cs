@@ -36,7 +36,7 @@ namespace PSNLibrary.Services
       try
       {
         var gamesToParse = psnClient.GetPlayedTitles(cancellationToken).GetAwaiter().GetResult();
-        return ParserGames.call(gamesToParse, psnLibrary);
+        return ParserGames.call(gamesToParse);
       }
       catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
       {

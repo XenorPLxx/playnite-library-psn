@@ -20,14 +20,14 @@ namespace PSNLibrary.Services
         var gameName = ParserName.call(title.name);
 
         string platform = ParserPlatform.call(title.platform);
-        var tag = ParserSubscription.call(title.subscriptionService, psnLibrary);
-        var source = ParserSource.call(title.subscriptionService, psnLibrary);
+        var membership = GetMembership(title.membership, title.subscriptionService);
+        var tag = ParserSubscription.call(membership, psnLibrary);
+        var source = ParserSource.call(membership, psnLibrary);
 
         parsedGames.Add(new GameMetadata
         {
           GameId = title.titleId,
           Name = gameName,
-          //CoverImage = SettingsViewModel.Settings.DownloadImageMetadata ? new MetadataFile(title.image.url) : null,
           Platforms = platform.IsNullOrEmpty() ? null : new HashSet<MetadataProperty> { new MetadataSpecProperty(platform) },
           Tags = tag == Guid.Empty ? null : new HashSet<MetadataProperty> { new MetadataIdProperty(tag) },
           Source = new MetadataNameProperty(source),
@@ -38,7 +38,7 @@ namespace PSNLibrary.Services
     }
 
     // TODO: Figure out smarter way to share code without overloading
-    public static List<GameMetadata> call(List<PlayedTitlesResponseData.PlayedTitlesRetrieve.Title> gamesToParse, PSNLibrary psnLibrary)
+    public static List<GameMetadata> call(List<PlayedTitlesResponseData.PlayedTitlesRetrieve.Title> gamesToParse)
     {
       var parsedGames = new List<GameMetadata>();
       foreach (var title in gamesToParse)
@@ -51,7 +51,6 @@ namespace PSNLibrary.Services
         {
           GameId = title.titleId,
           Name = gameName,
-          //CoverImage = SettingsViewModel.Settings.DownloadImageMetadata ? new MetadataFile(title.image.url) : null,
           Platforms = platform.IsNullOrEmpty() ? null : new HashSet<MetadataProperty> { new MetadataSpecProperty(platform) },
           LastActivity = title.lastPlayedDateTime,
         });
@@ -105,7 +104,6 @@ namespace PSNLibrary.Services
         {
           GameId = title.titleId,
           Name = gameName,
-          //CoverImage = SettingsViewModel.Settings.DownloadImageMetadata ? new MetadataFile(title.imageUrl) : null,
           Platforms = platform.IsNullOrEmpty() ? null : new HashSet<MetadataProperty> { new MetadataSpecProperty(platform) },
           Playtime = playtime,
           LastActivity = title.lastPlayedDateTime,
@@ -115,6 +113,11 @@ namespace PSNLibrary.Services
 
 
       return parsedGames;
+    }
+
+    private static string GetMembership(string membership, string subscriptionService)
+    {
+      return string.IsNullOrWhiteSpace(membership) ? subscriptionService : membership;
     }
   }
 }

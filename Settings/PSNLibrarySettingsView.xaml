@@ -25,39 +25,20 @@
           </TextBlock.Text>
         </TextBlock>
         <TextBlock TextWrapping="Wrap" Margin="0,8,0,0">
-                  <Run Text="1. Authenticate at"/>
-                  <Hyperlink
-                      NavigateUri="https://www.playstation.com/"
-                      RequestNavigate="Hyperlink_RequestNavigate">
-                      https://www.playstation.com
-                  </Hyperlink><!--
-                  --><Run Text=". Make sure to click 'Trust this Browser'."/>
-                  <LineBreak/>
-                  <Run Text="2. Go to"/>
-                  <Hyperlink
-                      NavigateUri="https://ca.account.sony.com/api/v1/ssocookie"
-                      RequestNavigate="Hyperlink_RequestNavigate">
-                      https://ca.account.sony.com/api/v1/ssocookie
-                  </Hyperlink><!--
-                  --><Run Text="."/>
-                  <LineBreak/>
-                  <Run Text="3. You'll see `{&quot;npsso&quot;:&quot;xxx&quot;}`. Copy the 'xxx' part to the text box below."/>
-                  <LineBreak/>
-                  <Run Text="4. Click 'Check authentication'."/>
-                  <LineBreak/>
-                  <Run Text="INFO: If you encounter errors like 'HTTP Status 429 – Too Many Requests', check out"/>
-                  <Hyperlink
-                      NavigateUri="https://github.com/XenorPLxx/playnite-library-psn?tab=readme-ov-file#common-problems"
-                      RequestNavigate="Hyperlink_RequestNavigate">
-                      common problems and solutions
-                  </Hyperlink><!--
-                  --><Run Text="."/>
+          <Run Text="1. Authenticate in your regular browser at "/>
+          <Hyperlink NavigateUri="https://www.playstation.com/" RequestNavigate="Hyperlink_RequestNavigate">https://www.playstation.com/</Hyperlink>
+          <Run Text=". Make sure to select 'Trust this Browser'."/>
+          <LineBreak/>
+          <Run Text="2. In that same browser, open "/>
+          <Hyperlink NavigateUri="https://ca.account.sony.com/api/v1/ssocookie" RequestNavigate="Hyperlink_RequestNavigate">https://ca.account.sony.com/api/v1/ssocookie</Hyperlink>
+          <Run Text="."/>
+          <LineBreak/>
+          <Run Text="3. Copy the value from `{&quot;npsso&quot;:&quot;xxx&quot;}` below, then click 'Check authentication'."/>
         </TextBlock>
-
         <Label Content="Paste NPSSO value here:" Margin="0,8,0,4"/>
-        <TextBox Name="Npsso" Text="{Binding Settings.Npsso}"></TextBox>
+        <TextBox Name="Npsso" Text="{Binding Settings.Npsso}"/>
         <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
-          <Button Content="Check Authentication" HorizontalAlignment="Left"                         
+          <Button Content="Check authentication" HorizontalAlignment="Left"
                           Command="{Binding CheckAuthenticationCommand}" Margin="0,0,0,0"/>
           <TextBlock VerticalAlignment="Center" Margin="10,5,5,5">
             <TextBlock.Tag>
@@ -98,11 +79,6 @@
         <CheckBox Name="CheckPSNConnectAccount"
                         IsChecked="{Binding Settings.ConnectAccount}"
                         Content="Connect account"/>
-
-        <CheckBox Name="CheckPSNDownloadImageMetadata"
-                        IsChecked="{Binding Settings.DownloadImageMetadata}"
-                        Content="Download image metadata from PSN"
-                        Margin="0,4,0,0"/>
 
         <StackPanel Margin="0,16,0,0">
           <TextBlock TextWrapping="Wrap" Margin="0,0,0,4" FontSize="16">
@@ -167,27 +143,6 @@
         </StackPanel>
       </StackPanel>
 
-      <StackPanel DockPanel.Dock="Top" Margin="0,0,0,16"
-                          IsEnabled="{Binding IsChecked, ElementName=CheckPSNConnectAccount}">
-        <TextBlock TextWrapping="Wrap" Margin="0,0,0,0" FontSize="16">
-          <TextBlock.Text>
-            Legacy authentication method
-          </TextBlock.Text>
-        </TextBlock>
-        <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
-          <Button Content="Authenticate" HorizontalAlignment="Left"                         
-                          Command="{Binding LoginCommand}" Margin="0,0,0,0"/>
-        </StackPanel>
-        <TextBlock TextWrapping="Wrap" Margin="0,8,0,0">
-                      WARNING: If you encounter an error stating "A connection to the server could not be established.", try checking 
-                  <Hyperlink
-                      NavigateUri="https://github.com/XenorPLxx/playnite-library-psn/issues/5#issuecomment-1305829051"
-                      RequestNavigate="Hyperlink_RequestNavigate">
-                      discussion about the issue
-                  </Hyperlink>
-
-        </TextBlock>
-      </StackPanel>
     </StackPanel>
   </ScrollViewer>
 
