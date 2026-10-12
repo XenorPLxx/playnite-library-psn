@@ -17,7 +17,7 @@ namespace PlayStationLibrary;
 /// </remarks>
 public sealed class PlayStationPlayTimeHistory
 {
-    private static readonly ILogger logger = LogManager.GetLogger();
+    private static readonly ILogger logger = LogManager.GetLogger<PlayStationPlayTimeHistory>();
     private readonly string historyPath;
     private readonly Dictionary<string, uint> playTimeByGameId;
 

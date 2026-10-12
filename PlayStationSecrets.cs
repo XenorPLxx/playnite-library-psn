@@ -10,7 +10,7 @@ namespace PlayStationLibrary;
 /// </summary>
 internal static class PlayStationSecrets
 {
-    private static readonly ILogger logger = LogManager.GetLogger();
+    private static readonly ILogger logger = LogManager.GetLogger(typeof(PlayStationSecrets));
     private static readonly byte[] entropy = Encoding.UTF8.GetBytes("PlayStationLibrary.Secrets.v1");
 
     public static string? Protect(string? value)

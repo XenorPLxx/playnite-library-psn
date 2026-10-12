@@ -17,7 +17,7 @@ namespace PlayStationLibrary;
 /// </remarks>
 public sealed class PlayStationTrophyProgress
 {
-    private static readonly ILogger logger = LogManager.GetLogger();
+    private static readonly ILogger logger = LogManager.GetLogger<PlayStationTrophyProgress>();
     private readonly string progressPath;
     // This character cannot occur in a Playnite game id, a PlayStation communication id, or a locale.
     // It also distinguishes the per-game, per-locale cache from earlier cache formats.
@@ -84,6 +84,17 @@ public sealed class PlayStationTrophyProgress
     public void Forget(string gameId, string communicationId, string locale)
     {
         progressByGameTrophySetAndLocale.Remove(BuildCacheKey(gameId, communicationId, locale));
+    }
+
+    /// <summary>Invalidates every set and locale for one game, leaving other games cached.</summary>
+    public void ForgetGame(string gameId)
+    {
+        var prefix = gameId + CacheKeySeparator;
+        foreach (var key in progressByGameTrophySetAndLocale.Keys
+                     .Where(key => key.StartsWith(prefix, StringComparison.Ordinal)).ToList())
+        {
+            progressByGameTrophySetAndLocale.Remove(key);
+        }
     }
 
     /// <summary>

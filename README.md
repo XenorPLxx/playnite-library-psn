@@ -2,6 +2,8 @@
 
 Bring your PlayStation library, play activity, and trophies into Playnite.
 
+Requires Playnite 11 Alpha2 (11.0.11.0) or newer.
+
 ## Features
 
 - Imports purchased and played PlayStation 4 and PlayStation 5 games, including platform, last-played date, and reported play time.
@@ -11,6 +13,7 @@ Bring your PlayStation library, play activity, and trophies into Playnite.
 - Recognises disc and other trophy-only games that PlayStation does not report as purchases. This import is optional and off by default, because such games can only be matched to your existing library by name.
 - Marks games included with PlayStation Plus, and can place those games under a dedicated **PlayStation Plus** source instead of the main PlayStation source.
 - Requests trophy names and descriptions in your Playnite language, or in a language chosen in settings.
+- Updates existing trophy text, category names, and tier labels when the trophy language changes.
 - Caches trophy-set mappings and completion data so later achievement refreshes only read the games that actually changed.
 
 ## Getting started
@@ -24,5 +27,9 @@ Run a library update to import the collection. The NPSSO is stored encrypted for
 ## Notes
 
 Whether play time and play sessions are applied to games you already have is Playnite's decision, on the **Library Settings** tab.
+
+Playnite controls automatic achievement updates globally and per integration. To force fresh trophy metadata even when your progress has not changed, select **Update achievements** from a game's menu. This also replaces edited trophy text and category/tier names with the imported values. If the command is missing, add it under **Settings → Appearance → Menu customization → Game menu** by dragging it beside an existing item.
+
+Base-game, additional-content, and tier labels are translated for English, Czech, German, Spanish, French, Italian, Dutch, Polish, and Portuguese; other trophy languages use English for these labels. DLC pack names use Sony's translations where available.
 
 PlayStation only links a game to its trophies once the account has trophy progress for it, so achievements appear for a game the first time you play it, not when you buy it. Play time, play sessions, and trophies are reported by PlayStation and are not available for games it does not track.

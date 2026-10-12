@@ -56,7 +56,7 @@ public partial class PlayStationLibrarySettingsHandler : PluginSettingsHandler
 {
     private const string SettingsErrorNotification = "playstation_settings_error";
 
-    private static readonly ILogger logger = LogManager.GetLogger();
+    private static readonly ILogger logger = LogManager.GetLogger<PlayStationLibrarySettingsHandler>();
     private readonly PlayStationLibraryPlugin plugin;
     private CancellationTokenSource? authenticationCheckCancellation;
 

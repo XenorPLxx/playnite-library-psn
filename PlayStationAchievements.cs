@@ -1,3 +1,4 @@
+using System.IO;
 using Playnite;
 
 namespace PlayStationLibrary;
@@ -47,7 +48,7 @@ public sealed class PlayStationAchievements
     private static string FormatState(PlayStationTrophyTitle title) =>
         $"{title.Progress}@{title.LastPlayed?.ToUnixTimeSeconds() ?? 0}";
 
-    private static readonly ILogger logger = LogManager.GetLogger();
+    private static readonly ILogger logger = LogManager.GetLogger<PlayStationAchievements>();
     private readonly IPlayniteApi playniteApi;
     private readonly PlayStationTrophyProgress trophyProgress;
 
@@ -68,11 +69,26 @@ public sealed class PlayStationAchievements
         PlayStationSession session,
         IReadOnlyCollection<Game> games,
         string locale,
+        string causation,
         CancellationToken cancellationToken)
     {
+        // Alpha2's game-menu command uses ManualEdit; library and post-play updates remain cached.
+        if (string.Equals(causation, BuiltInCausations.ManualEdit, StringComparison.Ordinal))
+        {
+            foreach (var game in games)
+            {
+                trophyProgress.ForgetGame(game.Id);
+            }
+
+            // Persist the invalidation even if the network request fails or the user cancels.
+            trophyProgress.Save();
+        }
+
+        var labels = PlayStationTrophyLabels.ForLocale(locale);
         var currentTrophyTitles = await GetCurrentTrophyTitlesAsync(session, cancellationToken);
         var trophySets = await ResolveTrophySetsAsync(session, games, cancellationToken);
         var results = new List<ImportableAchievements>();
+        var completedStates = new List<(string GameId, TrophySetState State)>();
         var requestedGameIds = games
             .Select(game => game.Id)
             .Where(gameId => !string.IsNullOrWhiteSpace(gameId))
@@ -88,8 +104,6 @@ public sealed class PlayStationAchievements
                 requestedGameIds.Contains(achievement.GameId!))
             .GroupBy(achievement => achievement.GameId!, StringComparer.Ordinal)
             .ToDictionary(group => group.Key, group => group.ToList(), StringComparer.Ordinal);
-        var trophyMetadataUpdates = new List<GameAchievement>();
-
         foreach (var game in games)
         {
             cancellationToken.ThrowIfCancellationRequested();
@@ -124,8 +138,14 @@ public sealed class PlayStationAchievements
             }
 
             var importedAchievements = new List<ImportableAchievement>();
+            var metadataToRefresh = new Dictionary<string, PlayStationTrophy>(StringComparer.Ordinal);
             var complete = true;
             var isCollection = setStates.Count > 1;
+
+            // Do not mark any member of a collection current before the complete payload and its
+            // metadata are ready. A failed member or write must remain retryable next time.
+            trophyProgress.ForgetGame(game.Id);
+            trophyProgress.Save();
 
             foreach (var state in setStates)
             {
@@ -133,22 +153,22 @@ public sealed class PlayStationAchievements
                 {
                     await Task.Delay(RequestDelay, cancellationToken);
                     var trophies = await session.GetTrophiesAsync(state.Set, cancellationToken);
-                    var groupNames = await GetGroupNamesAsync(session, state.Set, trophies, cancellationToken);
-                    importedAchievements.AddRange(trophies.Select(trophy =>
-                        ToAchievement(trophy, groupNames, state.Set, state.DisplayName, isCollection)));
-                    if (state.RefreshTrophyText)
+                    if (trophies.Count == 0)
                     {
-                        QueueTrophyMetadataUpdates(
-                            game.Id,
-                            trophies,
-                            state.Set,
-                            existingAchievementsByGame,
-                            trophyMetadataUpdates);
+                        throw new InvalidDataException($"No trophy definitions returned for '{state.Set.CommunicationId}'.");
                     }
 
-                    // Sets absent from the title list still need recording, otherwise they are read
-                    // again on every refresh and the cache never converges for them.
-                    trophyProgress.Record(game.Id, state.Set.CommunicationId, locale, state.Progress);
+                    var groupNames = await GetGroupNamesAsync(session, state.Set, trophies, cancellationToken);
+                    var importedSet = trophies.Select(trophy =>
+                        ToAchievement(trophy, groupNames, state.Set, state.DisplayName, isCollection, labels)).ToList();
+                    importedAchievements.AddRange(importedSet);
+                    if (state.RefreshTrophyText)
+                    {
+                        foreach (var trophy in trophies)
+                        {
+                            metadataToRefresh.Add(FormatAchievementId(state.Set, trophy.Id), trophy);
+                        }
+                    }
                 }
                 catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
                 {
@@ -161,19 +181,43 @@ public sealed class PlayStationAchievements
                     // read, while still allowing the rest of the library to continue.
                     complete = false;
                     logger.Error(e, $"Failed to read PlayStation trophies for '{state.Set.CommunicationId}'.");
-                    trophyProgress.Forget(game.Id, state.Set.CommunicationId, locale);
                 }
             }
 
             if (complete && importedAchievements.Count > 0)
             {
+                cancellationToken.ThrowIfCancellationRequested();
+                try
+                {
+                    await UpdateTrophyMetadataAsync(
+                        game.Id, importedAchievements, metadataToRefresh, existingAchievementsByGame);
+                    foreach (var state in setStates)
+                    {
+                        completedStates.Add((game.Id, state));
+                    }
+                }
+                catch (Exception e)
+                {
+                    // Return the complete import for normal progress handling, but leave its cache
+                    // invalid so a later sync retries every metadata write, even without new progress.
+                    logger.Error(e, $"Failed to refresh PlayStation achievement metadata for '{game.Name}'.");
+                }
+
                 results.Add(new ImportableAchievements(game.Id, importedAchievements));
             }
         }
 
+        cancellationToken.ThrowIfCancellationRequested();
+        // Defer recording successes until the batch can be returned. If another game cancels the
+        // operation, Playnite receives no payload and all attempted games must remain retryable.
+        foreach (var (gameId, state) in completedStates)
+        {
+            // Also remember unreported sets, or those members would never be cached.
+            trophyProgress.Record(gameId, state.Set.CommunicationId, locale, state.Progress);
+        }
+
         trophyProgress.PruneMissingGames(gameId => playniteApi.Library.Games.Contains(gameId));
         trophyProgress.Save();
-        await UpdateTrophyMetadataAsync(trophyMetadataUpdates);
         return results;
     }
 
@@ -183,66 +227,99 @@ public sealed class PlayStationAchievements
     /// update those records after reading a new definition, and only replace textual metadata;
     /// unlock dates and all progress remain entirely Playnite-managed.
     /// </summary>
-    private static void QueueTrophyMetadataUpdates(
+    private async Task UpdateTrophyMetadataAsync(
         string gameId,
-        IEnumerable<PlayStationTrophy> trophies,
-        PlayStationTrophySet trophySet,
-        IReadOnlyDictionary<string, List<GameAchievement>> existingAchievementsByGame,
-        List<GameAchievement> updates)
+        IReadOnlyCollection<ImportableAchievement> imported,
+        IReadOnlyDictionary<string, PlayStationTrophy> metadataToRefresh,
+        IReadOnlyDictionary<string, List<GameAchievement>> existingAchievementsByGame)
     {
+        var typeNames = imported.Where(item => item.AchievementType is not null)
+            .Select(item => item.AchievementType!).DistinctBy(type => type.Id)
+            .ToDictionary(type => type.Id, type => type.Name, StringComparer.Ordinal);
+        var trophyNames = imported.Where(item => item.TrophyType is not null)
+            .Select(item => item.TrophyType!).DistinctBy(type => type.Id)
+            .ToDictionary(type => type.Id, type => type.Name, StringComparer.Ordinal);
+        var refreshed = imported.Where(item => metadataToRefresh.ContainsKey(item.AchievementId)).ToList();
+        await SynchronizeLabelsAsync(
+            playniteApi.Library.GameAchievementTypes, typeNames,
+            refreshed.Where(item => item.AchievementType is not null)
+                .Select(item => item.AchievementType!.Id).ToHashSet(StringComparer.Ordinal),
+            (id, name) => new GameAchievementType { Id = id, Name = name });
+        await SynchronizeLabelsAsync(
+            playniteApi.Library.GameAchievementTrophies, trophyNames,
+            refreshed.Where(item => item.TrophyType is not null)
+                .Select(item => item.TrophyType!.Id).ToHashSet(StringComparer.Ordinal),
+            (id, name) => new GameAchievementTrophy { Id = id, Name = name });
+
         if (!existingAchievementsByGame.TryGetValue(gameId, out var existingAchievements))
         {
             return;
         }
 
-        var trophiesById = trophies.ToDictionary(
-            trophy => FormatAchievementId(trophySet, trophy.Id),
-            StringComparer.Ordinal);
+        var updates = new List<GameAchievement>();
         foreach (var existing in existingAchievements)
         {
             if (string.IsNullOrWhiteSpace(existing.AchievementId) ||
-                !trophiesById.TryGetValue(existing.AchievementId, out var trophy))
+                !metadataToRefresh.TryGetValue(existing.AchievementId, out var trophy))
             {
                 continue;
             }
 
+            var update = existing.GetCopy();
             var changed = false;
-            if (!string.IsNullOrWhiteSpace(trophy.Name) && !string.Equals(existing.Name, trophy.Name, StringComparison.Ordinal))
+            if (!string.IsNullOrWhiteSpace(trophy.Name) && !string.Equals(update.Name, trophy.Name, StringComparison.Ordinal))
             {
-                existing.Name = trophy.Name;
+                update.Name = trophy.Name;
                 changed = true;
             }
 
-            if (!string.IsNullOrWhiteSpace(trophy.Detail) && !string.Equals(existing.Description, trophy.Detail, StringComparison.Ordinal))
+            if (!string.IsNullOrWhiteSpace(trophy.Detail) && !string.Equals(update.Description, trophy.Detail, StringComparison.Ordinal))
             {
-                existing.Description = trophy.Detail;
+                update.Description = trophy.Detail;
                 changed = true;
             }
 
             if (changed)
             {
-                updates.Add(existing);
+                updates.Add(update);
             }
         }
-    }
 
-    private async Task UpdateTrophyMetadataAsync(List<GameAchievement> updates)
-    {
-        if (updates.Count == 0)
-        {
-            return;
-        }
-
-        try
+        if (updates.Count > 0)
         {
             await playniteApi.Library.GameAchievements.UpdateAsync(updates);
         }
-        catch (Exception e)
+    }
+
+    private static async Task SynchronizeLabelsAsync<T>(
+        ILibraryCollection<T> collection,
+        IReadOnlyDictionary<string, string> names,
+        HashSet<string> refreshIds,
+        Func<string, string, T> create) where T : LibraryObject
+    {
+        // Register each distinct descriptor before returning the import. Alpha2's importer does
+        // not reliably deduplicate multiple new category/tier IDs in one payload. These collections
+        // also let us rename the existing shared records without changing TypeId or TrophyId.
+        var missing = names.Where(item => !collection.Contains(item.Key))
+            .Select(item => create(item.Key, item.Value)).ToList();
+        if (missing.Count > 0)
         {
-            // A failure only leaves the text of existing trophies unchanged. The normal import
-            // result is still returned for Playnite to process newly discovered trophies and
-            // imported state through its standard path.
-            logger.Error(e, "Failed to refresh the text of existing PlayStation trophies.");
+            await collection.AddAsync(missing);
+        }
+
+        if (refreshIds.Count > 0)
+        {
+            await collection.UpdateAsync(refreshIds, item =>
+            {
+                var name = names[item.Id];
+                if (string.Equals(item.Name, name, StringComparison.Ordinal))
+                {
+                    return false;
+                }
+
+                item.Name = name;
+                return true;
+            });
         }
     }
 
@@ -504,20 +581,9 @@ public sealed class PlayStationAchievements
             return [];
         }
 
-        try
-        {
-            return await session.GetTrophyGroupNamesAsync(trophySet, cancellationToken);
-        }
-        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
-        {
-            throw;
-        }
-        catch (Exception e)
-        {
-            // Without names the trophies simply fall back to the generic categories.
-            logger.Error(e, $"Failed to read PlayStation trophy groups for '{trophySet.CommunicationId}'.");
-            return [];
-        }
+        // A failed request must not replace existing localized DLC names with fallback labels.
+        // Let the game's refresh fail so its metadata and cache can be retried together.
+        return await session.GetTrophyGroupNamesAsync(trophySet, cancellationToken);
     }
 
     private static ImportableAchievement ToAchievement(
@@ -525,7 +591,8 @@ public sealed class PlayStationAchievements
         Dictionary<string, string> groupNames,
         PlayStationTrophySet trophySet,
         string trophySetName,
-        bool isCollection)
+        bool isCollection,
+        PlayStationTrophyLabels labels)
     {
         return new ImportableAchievement(
             FormatAchievementId(trophySet, trophy.Id),
@@ -538,13 +605,14 @@ public sealed class PlayStationAchievements
             Hidden = trophy.Hidden,
             // Sony reports the share of players who earned it, which is already a percentage.
             Rarity = trophy.EarnedRate ?? 0,
-            TrophyType = GetTrophyType(trophy.Type),
+            TrophyType = GetTrophyType(trophy.Type, labels),
             AchievementType = GetAchievementGroup(
                 trophy.GroupId,
                 groupNames,
                 trophySet.CommunicationId,
                 trophySetName,
-                isCollection)
+                isCollection,
+                labels)
         };
     }
 
@@ -566,7 +634,8 @@ public sealed class PlayStationAchievements
         Dictionary<string, string> groupNames,
         string communicationId,
         string trophySetName,
-        bool isCollection)
+        bool isCollection,
+        PlayStationTrophyLabels labels)
     {
         if (string.IsNullOrWhiteSpace(groupId))
         {
@@ -577,13 +646,13 @@ public sealed class PlayStationAchievements
         {
             return new ImportableGameAchievementType(
                 isCollection ? $"psn_base_{communicationId}" : "psn_base",
-                FormatAchievementGroupName(trophySetName, "Base Game", isCollection));
+                FormatAchievementGroupName(trophySetName, labels.BaseGame, isCollection));
         }
 
         // Prefer the pack's real name over a generic label when it could be read.
         var categoryName = groupNames.TryGetValue(groupId, out var name) && !string.IsNullOrWhiteSpace(name)
             ? name
-            : "Additional Content";
+            : labels.AdditionalContent;
         return new ImportableGameAchievementType(
             $"psn_dlc_{communicationId}_{groupId}",
             FormatAchievementGroupName(trophySetName, categoryName, isCollection));
@@ -594,14 +663,14 @@ public sealed class PlayStationAchievements
         return isCollection ? trophySetName + " — " + categoryName : categoryName;
     }
 
-    private static ImportableGameAchievementTrophy? GetTrophyType(string? type)
+    private static ImportableGameAchievementTrophy? GetTrophyType(string? type, PlayStationTrophyLabels labels)
     {
         return type?.ToLowerInvariant() switch
         {
-            "bronze" => new ImportableGameAchievementTrophy("psn_bronze", "Bronze", null),
-            "silver" => new ImportableGameAchievementTrophy("psn_silver", "Silver", null),
-            "gold" => new ImportableGameAchievementTrophy("psn_gold", "Gold", null),
-            "platinum" => new ImportableGameAchievementTrophy("psn_platinum", "Platinum", null),
+            "bronze" => new ImportableGameAchievementTrophy("psn_bronze", labels.Bronze, null),
+            "silver" => new ImportableGameAchievementTrophy("psn_silver", labels.Silver, null),
+            "gold" => new ImportableGameAchievementTrophy("psn_gold", labels.Gold, null),
+            "platinum" => new ImportableGameAchievementTrophy("psn_platinum", labels.Platinum, null),
             _ => null
         };
     }

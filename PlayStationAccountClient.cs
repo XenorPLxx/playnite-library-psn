@@ -26,7 +26,7 @@ public sealed class PlayStationAccountClient
     private const string ClientAuthorization = "MDk1MTUxNTktNzIzNy00MzcwLTliNDAtMzgwNmU2N2MwODkxOnVjUGprYTV0bnRCMktxc1A=";
     private const string UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36";
 
-    private static readonly ILogger logger = LogManager.GetLogger();
+    private static readonly ILogger logger = LogManager.GetLogger<PlayStationAccountClient>();
     private readonly IPlayniteApi playniteApi;
     private readonly string tokenStorePath;
 

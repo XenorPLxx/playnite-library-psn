@@ -4,7 +4,7 @@ namespace PlayStationLibrary;
 
 public sealed class PlayStationLibraryPlugin : Plugin
 {
-    private static readonly ILogger logger = LogManager.GetLogger();
+    private static readonly ILogger logger = LogManager.GetLogger<PlayStationLibraryPlugin>();
     private static readonly IdImportableProperty playStationSource = new("playstation", "PlayStation");
     private static readonly NameImportableProperty playStationPlusSource = new("PlayStation Plus");
     private static readonly NameImportableProperty playStationPlusTag = new("PlayStation Plus");
@@ -52,7 +52,8 @@ public sealed class PlayStationLibraryPlugin : Plugin
         try
         {
             using var session = await new PlayStationAccountClient(PlayniteApi).CreateSessionAsync(Settings.Npsso, args.CancelToken, Settings.Locale);
-            var achievements = await new PlayStationAchievements(PlayniteApi).GetAchievementsAsync(session, games, achievementLocale, args.CancelToken);
+            var achievements = await new PlayStationAchievements(PlayniteApi).GetAchievementsAsync(
+                session, games, achievementLocale, args.Causation, args.CancelToken);
             PlayniteApi.Notifications.Remove(AchievementsErrorNotification);
             return achievements;
         }

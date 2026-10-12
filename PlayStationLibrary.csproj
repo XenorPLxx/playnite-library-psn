@@ -27,7 +27,12 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Playnite.SDK" Version="11.0.0-alpha13" />
+    <Compile Remove="Tests/**/*.cs" />
+    <InternalsVisibleTo Include="PlayStationLibrary.FixtureChecks" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Playnite.SDK" Version="11.0.0-alpha14" />
   </ItemGroup>
 
 </Project>
