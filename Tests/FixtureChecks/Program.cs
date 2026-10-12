@@ -10,6 +10,8 @@ static void Equal<T>(T expected, T actual, string message)
     }
 }
 
+TrophyLabelChecks.Run();
+
 using var fixture = new AchievementFixture();
 var english = PlayStationLocales.ToTrophyAcceptLanguage("en-us", "pl_PL");
 var french = PlayStationLocales.ToTrophyAcceptLanguage("fr-ca", "en_US");
@@ -147,6 +149,28 @@ fixture.Http.CancelOnOtherGame = null;
 imported = await fixture.Refresh(french, BuiltInCausations.LibraryUpdate, [fixture.OtherGame]);
 Equal(1, imported.Count, "Direct PS5 trophy-list game imported through trophy2");
 
-Equal("Srebro", PlayStationTrophyLabels.ForLocale("pl-PL, pl;q=0.9").Silver, "Polish trophy labels");
-Equal("Silver", PlayStationTrophyLabels.ForLocale("unknown").Silver, "Unsupported language fallback");
+// Newly translated labels use the same stable records. A manual refresh can also replace English
+// labels cached by an older build without invalidating every user's cache when the plugin updates.
+using var labelFixture = new AchievementFixture();
+var japanese = PlayStationLocales.ToTrophyAcceptLanguage("ja-jp", "en_US");
+await labelFixture.Refresh(japanese, BuiltInCausations.LibraryUpdate);
+Equal("BioShock Remastered — 本編", labelFixture.Types.Items["psn_base_NPWR00001_00"].Name, "Japanese category on first ingest");
+Equal("BioShock Remastered — 追加コンテンツ", labelFixture.Types.Items["psn_dlc_NPWR00001_00_002"].Name, "Japanese unnamed additional group");
+Equal("シルバー", labelFixture.Tiers.Items["psn_silver"].Name, "Japanese tier on first ingest");
+labelFixture.Types.Items["psn_base_NPWR00001_00"].Name = "BioShock Remastered — Base Game";
+labelFixture.Tiers.Items["psn_silver"].Name = "Silver";
+Equal(0, (await labelFixture.Refresh(japanese, BuiltInCausations.LibraryUpdate)).Count, "Existing locale cache retained");
+await labelFixture.Refresh(japanese, BuiltInCausations.ManualEdit);
+Equal("BioShock Remastered — 本編", labelFixture.Types.Items["psn_base_NPWR00001_00"].Name, "Manual refresh replaces cached English category");
+Equal("シルバー", labelFixture.Tiers.Items["psn_silver"].Name, "Manual refresh replaces cached English tier");
+var labelTypeIds = labelFixture.Types.Items.Keys.Order().ToArray();
+var labelTierIds = labelFixture.Tiers.Items.Keys.Order().ToArray();
+await labelFixture.Refresh(PlayStationLocales.ToTrophyAcceptLanguage("zh-hant-tw", "en_US"), BuiltInCausations.LibraryUpdate);
+Equal("BioShock Remastered — 遊戲本體", labelFixture.Types.Items["psn_base_NPWR00001_00"].Name, "Traditional Chinese category after language change");
+Equal("銀", labelFixture.Tiers.Items["psn_silver"].Name, "Traditional Chinese tier after language change");
+await labelFixture.Refresh(PlayStationLocales.ToTrophyAcceptLanguage("zh-hans-hk", "en_US"), BuiltInCausations.LibraryUpdate);
+Equal("BioShock Remastered — 游戏本体", labelFixture.Types.Items["psn_base_NPWR00001_00"].Name, "Simplified script wins over Hong Kong region");
+Equal("银", labelFixture.Tiers.Items["psn_silver"].Name, "Simplified Chinese tier after language change");
+Equal(true, labelTypeIds.SequenceEqual(labelFixture.Types.Items.Keys.Order()), "Translated categories keep IDs");
+Equal(true, labelTierIds.SequenceEqual(labelFixture.Tiers.Items.Keys.Order()), "Translated tiers keep IDs");
 Console.WriteLine("PASS: Alpha2 first ingest, collections, locale changes, manual refresh, normal cache, metadata preservation, failures, retries, cancellation, and PS5 service.");

@@ -30,6 +30,6 @@ Whether play time and play sessions are applied to games you already have is Pla
 
 Playnite controls automatic achievement updates globally and per integration. To force fresh trophy metadata even when your progress has not changed, select **Update achievements** from a game's menu. This also replaces edited trophy text and category/tier names with the imported values. If the command is missing, add it under **Settings → Appearance → Menu customization → Game menu** by dragging it beside an existing item.
 
-Base-game, additional-content, and tier labels are translated for English, Czech, German, Spanish, French, Italian, Dutch, Polish, and Portuguese; other trophy languages use English for these labels. DLC pack names use Sony's translations where available.
+Base-game, additional-content, and tier labels are translated for every language in the trophy-language selector (30 languages, with separate Simplified and Traditional Chinese labels). Regional variants share labels, except for Chinese script selection; unsupported automatic UI languages fall back to English. DLC pack names use Sony's translations where available. If a previous build cached English labels for your language, use **Update achievements** to refresh them without changing the language setting.
 
 PlayStation only links a game to its trophies once the account has trophy progress for it, so achievements appear for a game the first time you play it, not when you buy it. Play time, play sessions, and trophies are reported by PlayStation and are not available for games it does not track.
