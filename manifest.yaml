@@ -1,5 +1,11 @@
 AddonId: PlayStationLibrary_Builtin
 Packages:
+  - Version: 2.39
+    RequiredApiVersion: 6.12.0
+    ReleaseDate: 2026-10-30
+    PackageUrl: https://github.com/XenorPLxx/playnite-library-psn/releases/download/2.39/PlayStationLibrary_Builtin_2_39.pext
+    Changelog:
+      - Filters out JSON cookies that break .NET's System.Net.Cookie, which doesn't allow commas.
   - Version: 2.38
     RequiredApiVersion: 6.12.0
     ReleaseDate: 2026-08-15
