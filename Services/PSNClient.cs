@@ -599,7 +599,13 @@ namespace PSNLibrary.Services
             Path = "/"
           });
           webView.NavigateAndWait(loginUrl);
-          return DumpCookies(webView.GetCookies());
+          var cookies = webView.GetCookies()
+            .Where(c =>
+              !string.IsNullOrWhiteSpace(c.Name) &&
+              !string.IsNullOrWhiteSpace(c.Value) &&
+              !c.Value.TrimStart().StartsWith("{")
+            );
+          return DumpCookies(cookies);
         }
       }
       catch (Exception e)
